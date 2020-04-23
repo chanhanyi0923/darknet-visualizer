@@ -50,23 +50,22 @@ body {
     <div class="container-fluid">
       <h1>Hello, world!</h1>
       <a href="#" onclick="main()" class="btn btn-primary">Render</a>
+      <a href="#" onclick="createNode(global.graph, global.flowchart)" class="btn btn-primary">Create node</a>
       <br><br>
       <div class="row">
-        <div class="col-2 left-panel">
+        <div class="col-4 left-panel">
           <br>
           <div class="form-group">
             <textarea id="cfg" class="form-control" rows="20"></textarea>
           </div>
           <br>
         </div>
-        <div class="col-8 center-panel">
+        <div class="col-6 center-panel">
           <br>
-          <a href="#" onclick="createNode()" class="btn btn-primary">Create Node</a>
-          <a href="#" onclick="link()" class="btn btn-primary">Link</a>
-          <input id="from-index" type="text">
-          <input id="to-index" type="text">
-          <br>
-          <div><svg id="flowchart" width="960" height="600"><g/></svg></div>
+          <div>
+            <canvas id="myCanvas" width="100" height="100" tabindex="1"></canvas>
+          </div>
+          <div id="divSelectedNode"></div>
           <br>
         </div>
         <div class="col-2 right-panel">
@@ -81,238 +80,8 @@ body {
       </div>
     </div>
 
-    <!-- Optional JavaScript -->
-    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut" crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
-    <script src="https://d3js.org/d3.v5.min.js"></script>
-    <script src="https://dagrejs.github.io/project/dagre-d3/latest/dagre-d3.min.js"></script>
-    <script>
-//
-// let updateGraph = (flowchart, graph, index) => {
-//   //
-//   let node = graph.nodes[index];
-//   node.component.name = '!!!!';
-//   flowchart.setNode(node.index, {
-//       label: node.index + ': ' + node.component.name,
-//       id: 'n-' + node.index,
-//       class: 't-' + node.component.name,
-//   });
-//   let render = new dagreD3.render();
-//   render(d3.select("svg g"), flowchart);
-// };
-let global = {
-  'cfg': {},
-  //'components': {},
-  'graph': {},
-  'flowchart': {},
-  // 'state': {'name': 'idle', 'data': {}},
-  // 'mode': 'idle',
-};
-
-let renderFlowchart = (flowchart) => {
-  let render = new dagreD3.render();
-  let svg = d3.select('#flowchart');
-  let svgGroup = svg.append('g');
-  render(d3.select('#flowchart g'), flowchart);
-  let xCenterOffset = (svg.attr('width') - flowchart.graph().width) / 2;
-  svgGroup.attr('transform', 'translate(' + xCenterOffset + ', 20)');
-  svg.attr('height', flowchart.graph().height + 40);
-};
-
-let link = () => {
-  let from = parseInt(document.getElementById('from-index').value);
-  let to = parseInt(document.getElementById('to-index').value);
-};
-
-let createNode = () => {
-  let index = global.graph.nodes.length;
-  let node = {
-    'index': index,
-    'component': {
-      'name': 'n',
-      'args': 'a',
-    },
-  };
-  global.graph.nodes.push(node);
-  global.flowchart.setNode(node.index, {
-    label: node.index + ': hello',
-    id: 'n-' + node.index,
-    class: 't-' + node.component.name,
-  });
-  renderFlowchart(global.flowchart);
-};
-
-let initFlowchart = (graph) => {
-  let flowchart = new dagreD3.graphlib.Graph()
-  .setGraph({})
-  .setDefaultEdgeLabel(function() { return {}; });
-  graph.nodes.forEach(node => {
-    flowchart.setNode(node.index, {
-      label: node.index + ': ' + node.component.name,
-      id: 'n-' + node.index,
-      class: 't-' + node.component.name,
-    });
-  });
-  flowchart.nodes().forEach(function(v) {
-    let node = flowchart.node(v);
-    node.rx = node.ry = 5;
-  });
-  graph.edges.forEach(edge => {
-    flowchart.setEdge(edge.from, edge.to);
-  });
-  renderFlowchart(flowchart);
-
-  return flowchart;
-};
-
-let buildGraph = (components) => {
-  let nodes = [], edges = [];
-  components.forEach((component, index) => {
-    nodes.push({'index': index, 'component': component});
-    if (index > 0) {
-      switch (component.name) {
-        case 'convolutional':
-          edges.push({'from': index - 1, 'to': index});
-          break;
-        case 'shortcut':
-          if (component.args.from != null) {
-            let fromIndex = index + parseInt(component.args.from);
-            edges.push({'from': fromIndex, 'to': index});
-            edges.push({'from': index - 1, 'to': index});
-          }
-          break;
-        case 'route':
-          if (component.args.layers != null) {
-            component.args.layers.split(',')
-            .map(e => e.trim())
-            .filter(e => !(!e || e.length === 0 || !e.trim()))
-            .forEach(layer => {
-              let layerIndex = parseInt(layer);
-              if (layerIndex >= 0) {
-                edges.push({'from': layerIndex, 'to': index});
-              } else {
-                edges.push({'from': index + layerIndex, 'to': index});
-              }
-            });
-          }
-          break;
-        default:
-          edges.push({'from': index - 1, 'to': index});
-      }
-    }
-  });
-  return {'nodes': nodes, 'edges': edges};
-};
-
-let appendEventForNode = (graph) => {
-  graph.nodes.forEach(node => {
-    let id = 'n-' + node.index;
-    document.getElementById(id).addEventListener('mouseover', () => {
-      let componentDetail = JSON.stringify(node.component.args);
-      document.getElementById('node-info').innerHTML = componentDetail;
-    });
-
-    document.getElementById(id).addEventListener('mouseout', () => {
-      document.getElementById('node-info').innerHTML = '';
-    });
-  });
-};
-
-let exportCfg = (graph) => {
-  let str = graph.nodes.map(node => {
-    let argsStr = Object.keys(node.component.args).map(k => {
-      return k + '=' + node.component.args[k];
-    }).join('\n');
-    return '[' + node.component.name + ']\n' + argsStr;
-  }).join('\n\n');
-
-  return str;
-};
-
-// let svgMousedown = (e) => {
-//   if (global.mode == 'line') {
-//     global.state.name = 'drawing';
-//     let g = d3.select('#flowchart').append('g');
-//     let line = g.append('line');
-//     g.append('defs').append('marker')
-//     .attr('id', 'drawingArrow')
-//     .attr('refX', '9')
-//     .attr('refY', '5')
-//     .attr('markerWidth', '8')
-//     .attr('markerHeight', '6')
-//     .attr('orientorient', 'auto')
-//     .attr('markerUnits', 'strokeWidth');
-
-//     line.attr('class', 'edgePath');
-//     line.attr('x1', e.offsetX);
-//     line.attr('y1', e.offsetY);
-//     line.attr('x2', e.offsetX);
-//     line.attr('y2', e.offsetY);
-//     line.attr('marker-end', 'url(#drawingArrow)')
-//     global.state.data['g'] = g;
-//     console.log('svgMousedown');
-//   }
-// };
-
-// let svgMousemove = (e) => {
-//   if (global.mode == 'line') {
-//     if (global.state.name == 'drawing') {
-//       global.state.data.g.select('line').attr('x2', e.offsetX);
-//       global.state.data.g.select('line').attr('y2', e.offsetY);
-//       console.log(e.offsetX + ' ' + e.offsetY);
-//     }
-//   }
-// };
-
-// let svgMouseup = (e) => {
-//   if (global.mode == 'line') {
-//     global.state.name = 'idle';
-//     console.log('svgMouseup');
-//   }
-// };
-
-// let appendEventForSvg = () => {
-//   let svg = document.getElementById('flowchart');
-//   svg.addEventListener('mousedown', svgMousedown);
-//   svg.addEventListener('mousemove', svgMousemove);
-//   svg.addEventListener('mouseup', svgMouseup);
-// };
-
-let main = () => {
-  global.cfg = document.getElementById('cfg').value;
-  global.graph = buildGraph(parseCfg(global.cfg));
-  global.flowchart = initFlowchart(global.graph);
-  //appendEventForNode(global.graph);
-  //appendEventForSvg();
-  //console.log( exportCfg(graph) );
-  //updateGraph(flowchart, graph, 3);
-};
-
-let parseCfg = (cfg) => {
-  let components = cfg.replace(/\[(.*?)\]/g, '\0$1\n')
-  .split('\0')
-  .filter(e => !(!e || e.length === 0 || !e.trim()))
-  .map(e => {
-    let s = e.split(/\n|\r/).filter(e => !(!e || e.length === 0 || !e.trim()))
-    if (s.length > 1 && s[0].trim().length > 0) {
-      let name = s[0].trim();
-      let args = {};
-      for (let i = 1; i < s.length; i ++) {
-        let t = s[i].split('=');
-        if (t.length == 2 && t[0].trim().length > 0 && t[1].trim().length > 0) {
-          args[t[0].trim()] = t[1].trim();
-        }
-      }
-      return {'name': name, 'args': args};
-    }
-    return null;
-  })
-  .filter(e => e);
-  return components;
-};
-//
-    </script>
+    <script src="diagramflow.js"></script>
+    <script src="https://dagrejs.github.io/project/dagre/latest/dagre.js"></script>
+    <script src="main.js"></script>
   </body>
 </html>
