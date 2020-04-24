@@ -5,21 +5,24 @@ let global = {
 };
 
 let flowchartConfig = {
+    nodeWidth: 200,
+    nodeHeight: 60,
     rectangleRenderer: (ctx, node) => {
         ctx.beginPath();
-        ctx.fillStyle = node.fillStyle;
-        ctx.strokeStyle = 'blue';
+        //ctx.fillStyle = node.fillStyle;
+        ctx.fillStyle = '#pink';
+        ctx.strokeStyle = '1px solid black';
         ctx.fillRect(node.x, node.y, node.w, node.h);
         ctx.fillStyle = 'black';
-        ctx.font = '10px Verdana';
+        ctx.font = '12px monospace';
         ctx.textBaseline = 'top';
         node.textfill(ctx);
     },
     connectors: [
         new model.connector(0.5, 0, 'output', 'output', {
-            fillStyle: 'green',
-            strokeStyle: 'black',
-            highlightStrokeStyle: 'red',
+            fillStyle: 'DarkSeaGreen',
+            strokeStyle: 'green',
+            highlightStrokeStyle: 'black',
             highlightText: 'black'
         }, {
             dropAllowed: true,
@@ -27,9 +30,9 @@ let flowchartConfig = {
             radius: 7
         }),
         new model.connector(0.5, 1, 'input', 'input', {
-            fillStyle: 'red',
-            strokeStyle: 'orange',
-            highlightStrokeStyle: 'red',
+            fillStyle: 'PowderBlue',
+            strokeStyle: 'blue',
+            highlightStrokeStyle: 'black',
             highlightText: 'black'
         }, {
             dropAllowed: false,
@@ -49,10 +52,10 @@ let renderFlowchart = (flowchart) => {
     svg.attr('height', flowchart.graph().height + 40);
 };
 
-let link = () => {
-    let from = parseInt(document.getElementById('from-index').value);
-    let to = parseInt(document.getElementById('to-index').value);
-};
+// let link = () => {
+//     let from = parseInt(document.getElementById('from-index').value);
+//     let to = parseInt(document.getElementById('to-index').value);
+// };
 
 let createNode = (graph, flowchart) => {
     let index = graph.nodes.length;
@@ -65,10 +68,10 @@ let createNode = (graph, flowchart) => {
     };
     graph.nodes.push(node);
     flowchart.addNode(new flowchart.node(
-        500,
-        500,
-        100,
         50,
+        50,
+        flowchartConfig.nodeWidth,
+        flowchartConfig.nodeHeight,
         flowchartConfig.connectors,
         node.index + ': ' + node.component.name,
         'green',
@@ -83,12 +86,12 @@ let createNode = (graph, flowchart) => {
     // renderFlowchart(global.flowchart);
 };
 
-let autoLayout = (nodeWidth, nodeHeight, nodeNum, edges, padding) => {
+let autoLayout = (nodeNum, edges, padding) => {
     let g = new dagre.graphlib.Graph();
     g.setGraph({});
     g.setDefaultEdgeLabel(function () { return {}; });
     for (let i = 0; i < nodeNum; i++) {
-        g.setNode(i, { width: nodeWidth, height: nodeHeight });
+        g.setNode(i, { width: flowchartConfig.nodeWidth, height: flowchartConfig.nodeHeight });
     }
     edges.forEach(edge => {
         g.setEdge(edge.from, edge.to);
@@ -106,9 +109,86 @@ let autoLayout = (nodeWidth, nodeHeight, nodeNum, edges, padding) => {
     });
     layout = Object.keys(layout).map(k => {
         let e = layout[k];
-        return { x: (padding + e.x - minX), y: (padding + e.y - minY) }
+        return { x: (30 + e.x - minX), y: (30 + e.y - minY) }
     });
-    return { width: maxX - minX + 2 * padding, height: maxY - minY + 2 * padding, nodes: layout };
+    return { width: maxX - minX + 30 + padding, height: maxY - minY + 30 + padding, nodes: layout };
+};
+
+let showNodeDetail = (nodeIndex) => {
+    let info = document.getElementById('node-info');
+    let node = global.graph.nodes[nodeIndex];
+    let text = [
+        '<form>',
+        `<div class="form-group row">
+            <label class="col-sm-12 col-form-label"><h4>${node.component.name}</h4></label>
+        </div>`,
+    ];
+    Object.keys(node.component.args).forEach(k => {
+        let v = node.component.args[k];
+        text.push(`
+        <div class="form-group row">
+            <label class="col-sm-6 col-form-label">${k}</label>
+            <label class="col-sm-6 col-form-label"><span class="badge badge-info">${v}</span></label>
+        </div>
+        `);
+    });
+
+    text.push('</form>');
+    info.innerHTML = text.join('\n');
+};
+
+let showNodeEditor = (nodeIndex) => {
+    let info = document.getElementById('node-info');
+    let node = global.graph.nodes[nodeIndex];
+    let text = [
+        '<form id="modifyNode">',
+        `<div class="form-group row">
+            <div class="col-sm-12">
+                <input type="text" class="form-control" id="node-editor-component-name" name="component-name" value="${node.component.name}">
+            </div>
+        </div>`,
+    ];
+    Object.keys(node.component.args).forEach(k => {
+        let v = node.component.args[k];
+        text.push(`
+        <div class="form-group row">
+            <label class="col-sm-6 col-form-label">${k}</label>
+            <div class="col-sm-6">
+                <input type="text" class="form-control" name="${k}" value="${v}">
+            </div>
+        </div>
+        `);
+    });
+
+    text.push(`
+        <div class="form-group row">
+            <div class="col-sm-6">
+                <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+        </div>
+    </form>
+    `);
+    info.innerHTML = text.join('\n');
+    let form = document.getElementById('modifyNode');
+    form.addEventListener('submit', (e) => {
+        //console.log(form);
+        let name = document.getElementById('node-editor-component-name').value;
+        let args = {};
+        let inputs = form.getElementsByTagName('input');
+        for (let input of inputs) {
+            if(input.name != 'component-name') {
+                args[input.name] = input.value;
+            }
+        }
+        let component = {name: name, args: args};
+        node.component = component;
+        showNodeDetail(nodeIndex);
+        model.nodes[mouse.selNode].text = name;
+        console.log(component);
+
+        e.preventDefault();
+        return false;
+    });
 };
 
 let initFlowchart = (graph) => {
@@ -116,15 +196,15 @@ let initFlowchart = (graph) => {
     // img.onload = () => {
     //     model.draw();
     // };
-
-    let nodeWidth = 200, nodeHeight = 60;
-    layout = autoLayout(nodeWidth, nodeHeight, graph.nodes.length, graph.edges, 200);
+               
+    
+    layout = autoLayout(graph.nodes.length, graph.edges, 200);
     graph.nodes.forEach(node => {
         model.addNode(new model.node(
             layout.nodes[node.index].x,
             layout.nodes[node.index].y,
-            100,
-            50,
+            flowchartConfig.nodeWidth,
+            flowchartConfig.nodeHeight,
             flowchartConfig.connectors,
             node.index + ': ' + node.component.name,
             'green',
@@ -144,19 +224,26 @@ let initFlowchart = (graph) => {
 
     // console.log( layout.height);
     // console.log(document.getElementById('myCanvas').parentElement);
-    document.getElementById('myCanvas').width = layout.width;
+    document.getElementById('myCanvas').width = document.getElementById('myCanvas').parentElement.clientWidth;
     document.getElementById('myCanvas').height = layout.height;
     // document.getElementById('myCanvas').parentElement.style.clientWidth = layout.width + 10;
     // document.getElementById('myCanvas').parentElement.style.clientHeight = layout.height + 10;
     model.init('myCanvas');
     model.draw();
 
-    document.addEventListener('selectionChanged', function (e) {
-        document.all('divSelectedNode').innerText = 'Selected node:' + e.detail;
+    document.addEventListener('releaseNode', () => {
+        document.getElementById('node-info').innerHTML = '';
     });
+    document.addEventListener('selectionChanged', e => showNodeDetail(e.detail));
     document.addEventListener('nodesLinked', (e) => {
         console.log(e.detail.from);
         console.log(e.detail.to);
+    });
+
+    document.addEventListener('clickNode', e => showNodeEditor(e.detail));
+
+    document.addEventListener('clickLink', (e) => {
+        console.log(e.detail);
     });
 
     return model;
@@ -221,32 +308,32 @@ let buildGraph = (components) => {
     return { 'nodes': nodes, 'edges': edges };
 };
 
-let appendEventForNode = (graph) => {
-    graph.nodes.forEach(node => {
-        let id = 'n-' + node.index;
-        document.getElementById(id).addEventListener('mouseover', () => {
-            let componentDetail = JSON.stringify(node.component.args);
-            document.getElementById('node-info').innerHTML = componentDetail;
-        });
+// let appendEventForNode = (graph) => {
+//     graph.nodes.forEach(node => {
+//         let id = 'n-' + node.index;
+//         document.getElementById(id).addEventListener('mouseover', () => {
+//             let componentDetail = JSON.stringify(node.component.args);
+//             document.getElementById('node-info').innerHTML = componentDetail;
+//         });
 
-        document.getElementById(id).addEventListener('mouseout', () => {
-            document.getElementById('node-info').innerHTML = '';
-        });
-    });
-};
+//         document.getElementById(id).addEventListener('mouseout', () => {
+//             document.getElementById('node-info').innerHTML = '';
+//         });
+//     });
+// };
 
-let exportCfg = (graph) => {
-    let str = graph.nodes.map(node => {
+let exportCfg = () => {
+    let str = global.graph.nodes.map(node => {
         let argsStr = Object.keys(node.component.args).map(k => {
             return k + '=' + node.component.args[k];
         }).join('\n');
         return '[' + node.component.name + ']\n' + argsStr;
     }).join('\n\n');
 
-    return str;
+    document.getElementById('cfg').value = str;
 };
 
-let main = () => {
+let importCfg = () => {
     global.cfg = document.getElementById('cfg').value;
     global.graph = buildGraph(parseCfg(global.cfg));
     global.flowchart = initFlowchart(global.graph);
@@ -257,7 +344,7 @@ let main = () => {
 };
 
 let parseCfg = (cfg) => {
-    let components = cfg.replace(/\[(.*?)\]/g, '\0$1\n')
+    let components = cfg.replace(/\#.*/g, '').replace(/\[(.*?)\]/g, '\0$1\n')
         .split('\0')
         .filter(e => !(!e || e.length === 0 || !e.trim()))
         .map(e => {

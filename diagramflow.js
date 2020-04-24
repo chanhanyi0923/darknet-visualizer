@@ -6,12 +6,13 @@ var model = {
 
     defaultNodeRenderer: function (ctx, node) {
         ctx.beginPath();
-        ctx.fillStyle = node.fillStyle;
-        ctx.strokeStyle = "blue";
+        //ctx.fillStyle = node.fillStyle;
+        ctx.fillStyle = 'pink';
+        ctx.strokeStyle = '';
         ctx.fillRect(node.x, node.y, node.w, node.h);
-        ctx.fillStyle = "black";
-        ctx.font = "10px Verdana";
-        ctx.textBaseline = "top";
+        //ctx.fillStyle = 'blue';
+        //ctx.font = '16px monospace';
+        ctx.textBaseline = 'top';
         node.textfill(ctx);
     },
 
@@ -211,7 +212,7 @@ var model = {
     },
     node: function (x, y, w, h, connectors, text, fillStyle, figure, args) {
         this.textfill = function (ctx) {
-            var fontSize = 12;
+            var fontSize = 16;
             var lines = new Array();
             var width = 0, i, j;
             var result;
@@ -221,7 +222,7 @@ var model = {
 
             // Font and size is required for ctx.measureText()
             ctx.textAlign = "left";
-            ctx.font = fontSize + "px Arial";
+            ctx.font = fontSize + "px monospace";
 
             ctx.textAlign = "center";
             // Start calculation
@@ -238,7 +239,7 @@ var model = {
                 text = text.substr(lines[lines.length - 1].length, text.length);
             }
 
-            ctx.font = fontSize + "px Arial";
+            ctx.font = fontSize + "px monospace";
 
             // Render
             ctx.fillStyle = color;
@@ -991,6 +992,8 @@ var mouse = {
                         mouse.selConnector = null;
                         mouse.selConnectorNode = null;
                         model.draw();
+                        var event = new CustomEvent("releaseNode");
+                        document.dispatchEvent(event);
                     }
                     // mouse.selConnector=null;
                 }
@@ -1044,50 +1047,56 @@ var mouse = {
     },
     dblclick: function (ev) {
         if (mouse.selNode != null) {
-            mouse.editText = true;
-            var textNode = model.nodes[mouse.selNode];
-            var ed = document.getElementById("tmpTextEdit");
-            if (!ed)
-                ed = document.createElement("TEXTAREA");
-            ed.id = "tmpTextEdit";
-            ed.style.display = "block";
-            ed.style.position = "absolute";
-            ed.style.margin = 0;
-            ed.style.padding = 0;
-            var rect = model.myCanvas.getBoundingClientRect();
-            ed.style.left = textNode.x + rect.left + "px";
-            ed.style.top = textNode.y + rect.top + "px";
-            ed.style.width = textNode.w + "px";
-            ed.style.height = textNode.h + "px";
-            ed.value = textNode.text;
-            ed.addEventListener("keyup", function () { model.nodes[mouse.selNode].text = this.value })
-            document.body.appendChild(ed);
+            var event = new CustomEvent("clickNode", { "detail": mouse.selNode });
+            document.dispatchEvent(event);
+
+            // mouse.editText = true;
+            // var textNode = model.nodes[mouse.selNode];
+            // var ed = document.getElementById("tmpTextEdit");
+            // if (!ed)
+            //     ed = document.createElement("TEXTAREA");
+            // ed.id = "tmpTextEdit";
+            // ed.style.display = "block";
+            // ed.style.position = "absolute";
+            // ed.style.margin = 0;
+            // ed.style.padding = 0;
+            // var rect = model.myCanvas.getBoundingClientRect();
+            // ed.style.left = textNode.x + rect.left + "px";
+            // ed.style.top = textNode.y + rect.top + "px";
+            // ed.style.width = textNode.w + "px";
+            // ed.style.height = textNode.h + "px";
+            // ed.value = textNode.text;
+            // ed.addEventListener("keyup", function () { model.nodes[mouse.selNode].text = this.value })
+            // document.body.appendChild(ed);
         }
         if (mouse.selLink != null) {
-            mouse.editText = true;
+            var event = new CustomEvent("clickLink", { "detail": mouse.selLink });
+            document.dispatchEvent(event);
 
-            var link = model.links[mouse.selLink];
-            var elementT = link.segments[link.indexText];
-            var elementT0 = link.segments[link.indexText - 1];
-            var x = (elementT.x + elementT0.x) / 2;
-            var y = (elementT.y + elementT0.y) / 2;
+            // mouse.editText = true;
 
-            var ed = document.getElementById("tmpTextEdit");
-            if (!ed)
-                ed = document.createElement("TEXTAREA");
-            ed.id = "tmpTextEdit";
-            ed.style.display = "block";
-            ed.style.position = "absolute";
-            ed.style.margin = 0;
-            ed.style.padding = 0;
-            var rect = model.myCanvas.getBoundingClientRect();
-            ed.style.left = x + rect.left - 100 + "px";
-            ed.style.top = y + rect.top - 10 + "px";
-            ed.style.width = 200 + "px";
-            ed.style.height = 20 + "px";
-            ed.value = link.text;
-            ed.addEventListener("keyup", function () { model.links[mouse.selLink].text = this.value })
-            document.body.appendChild(ed);
+            // var link = model.links[mouse.selLink];
+            // var elementT = link.segments[link.indexText];
+            // var elementT0 = link.segments[link.indexText - 1];
+            // var x = (elementT.x + elementT0.x) / 2;
+            // var y = (elementT.y + elementT0.y) / 2;
+
+            // var ed = document.getElementById("tmpTextEdit");
+            // if (!ed)
+            //     ed = document.createElement("TEXTAREA");
+            // ed.id = "tmpTextEdit";
+            // ed.style.display = "block";
+            // ed.style.position = "absolute";
+            // ed.style.margin = 0;
+            // ed.style.padding = 0;
+            // var rect = model.myCanvas.getBoundingClientRect();
+            // ed.style.left = x + rect.left - 100 + "px";
+            // ed.style.top = y + rect.top - 10 + "px";
+            // ed.style.width = 200 + "px";
+            // ed.style.height = 20 + "px";
+            // ed.value = link.text;
+            // ed.addEventListener("keyup", function () { model.links[mouse.selLink].text = this.value })
+            // document.body.appendChild(ed);
         }
     }
 }
