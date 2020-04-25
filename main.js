@@ -130,7 +130,7 @@ let showNodeDetail = (nodeIndex) => {
     info.innerHTML = text.join('\n');
 };
 
-let addAttribute = () => {
+let addAttributeRow = () => {
     let attributes = document.getElementById('nodeAttributes');
     let newAttributeName = document.getElementById('new-attribute-name').value;
     attributes.innerHTML += `
@@ -140,10 +140,15 @@ let addAttribute = () => {
             <input type="text" class="form-control" name="${newAttributeName}" value="value">
         </div>
         <div class="col-sm-3">
-            <a href="#" onclick="" class="btn btn-danger btn-block">&times;</a>
+            <a href="#" onclick="removeAttributeRow(this)" class="btn btn-danger btn-block">&times;</a>
         </div>
     </div>
     `;
+};
+
+let removeAttributeRow = (e) => {
+    let dom = e.parentElement.parentElement;
+    dom.remove();
 };
 
 let showNodeEditor = (nodeIndex) => {
@@ -167,7 +172,7 @@ let showNodeEditor = (nodeIndex) => {
                 <input type="text" class="form-control" name="${k}" value="${v}">
             </div>
             <div class="col-sm-3">
-                <a href="#" onclick="" class="btn btn-danger btn-block">&times;</a>
+                <a href="#" onclick="removeAttributeRow(this)" class="btn btn-danger btn-block">&times;</a>
             </div>
         </div>
         `);
@@ -187,7 +192,7 @@ let showNodeEditor = (nodeIndex) => {
                 <input type="text" class="form-control" id="new-attribute-name" value="new_attribute_name">
             </div>
             <div class="col-sm-3">
-                <a href="#" onclick="addAttribute()" class="btn btn-info btn-block">Add</a>
+                <a href="#" onclick="addAttributeRow()" class="btn btn-info btn-block">Add</a>
             </div>
         </div>
     </form>
