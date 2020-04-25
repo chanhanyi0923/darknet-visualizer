@@ -5,6 +5,7 @@ let global = {
 };
 
 let flowchartConfig = {
+    newNodePlace: {x: 50, y: 50},
     nodeWidth: 200,
     nodeHeight: 60,
     rectangleRenderer: (ctx, node) => {
@@ -68,8 +69,8 @@ let createNode = (graph, flowchart) => {
     };
     graph.nodes.push(node);
     flowchart.addNode(new flowchart.node(
-        50,
-        50,
+        flowchartConfig.newNodePlace.x,
+        flowchartConfig.newNodePlace.y,
         flowchartConfig.nodeWidth,
         flowchartConfig.nodeHeight,
         flowchartConfig.connectors,
@@ -77,6 +78,9 @@ let createNode = (graph, flowchart) => {
         'green',
         flowchartConfig.rectangleRenderer
     ));
+    flowchartConfig.newNodePlace.x += 20;
+    flowchartConfig.newNodePlace.y += 20;
+
     flowchart.draw();
     // global.flowchart.setNode(node.index, {
     //     label: node.index + ': hello',
@@ -184,8 +188,6 @@ let showNodeEditor = (nodeIndex) => {
         node.component = component;
         showNodeDetail(nodeIndex);
         model.nodes[mouse.selNode].text = name;
-        console.log(component);
-
         e.preventDefault();
         return false;
     });
@@ -196,6 +198,7 @@ let initFlowchart = (graph) => {
     // img.onload = () => {
     //     model.draw();
     // };
+    model.clear();
                
     
     layout = autoLayout(graph.nodes.length, graph.edges, 200);
@@ -225,7 +228,7 @@ let initFlowchart = (graph) => {
     // console.log( layout.height);
     // console.log(document.getElementById('myCanvas').parentElement);
     document.getElementById('myCanvas').width = document.getElementById('myCanvas').parentElement.clientWidth;
-    document.getElementById('myCanvas').height = layout.height;
+    document.getElementById('myCanvas').height = Math.max(700, layout.height);
     // document.getElementById('myCanvas').parentElement.style.clientWidth = layout.width + 10;
     // document.getElementById('myCanvas').parentElement.style.clientHeight = layout.height + 10;
     model.init('myCanvas');
@@ -236,10 +239,8 @@ let initFlowchart = (graph) => {
     });
     document.addEventListener('selectionChanged', e => showNodeDetail(e.detail));
     document.addEventListener('nodesLinked', (e) => {
-        console.log(e.detail.from);
-        console.log(e.detail.to);
+        global.graph.edges.add({from: e.detail.from, to: e.detail.to});
     });
-
     document.addEventListener('clickNode', e => showNodeEditor(e.detail));
 
     document.addEventListener('clickLink', (e) => {
@@ -270,19 +271,16 @@ let initFlowchart = (graph) => {
 };
 
 let buildGraph = (components) => {
-    let nodes = [], edges = [];
+    let nodes = [], edges = new Set();
     components.forEach((component, index) => {
         nodes.push({ 'index': index, 'component': component });
         if (index > 0) {
             switch (component.name) {
-                case 'convolutional':
-                    edges.push({ 'from': index - 1, 'to': index });
-                    break;
                 case 'shortcut':
                     if (component.args.from != null) {
                         let fromIndex = index + parseInt(component.args.from);
-                        edges.push({ 'from': fromIndex, 'to': index });
-                        edges.push({ 'from': index - 1, 'to': index });
+                        edges.add({ 'from': fromIndex, 'to': index });
+                        edges.add({ 'from': index - 1, 'to': index });
                     }
                     break;
                 case 'route':
@@ -293,15 +291,15 @@ let buildGraph = (components) => {
                             .forEach(layer => {
                                 let layerIndex = parseInt(layer);
                                 if (layerIndex >= 0) {
-                                    edges.push({ 'from': layerIndex, 'to': index });
+                                    edges.add({ 'from': layerIndex, 'to': index });
                                 } else {
-                                    edges.push({ 'from': index + layerIndex, 'to': index });
+                                    edges.add({ 'from': index + layerIndex, 'to': index });
                                 }
                             });
                     }
                     break;
                 default:
-                    edges.push({ 'from': index - 1, 'to': index });
+                    edges.add({ 'from': index - 1, 'to': index });
             }
         }
     });
@@ -322,8 +320,159 @@ let buildGraph = (components) => {
 //     });
 // };
 
+let formatGraph = (graph) => {
+    let renumber = (nodes, edges) => {
+        let fromTo = Array(nodes.length).fill(null).map(e => new Array(0));
+        let degrees = Array(nodes.length).fill(0);
+        edges.forEach(edge => {
+            fromTo[edge.from].push(edge.to);
+            degrees[edge.to] += 1;
+        });
+    
+        let roots = degrees
+            .map((d, i) => { return {index: i, degree: d} })
+            .filter(e => e.degree == 0);
+        if (roots.length == 0) {
+            throw 'root layer does not exist!';
+        } else if (roots.length > 1) {
+            throw 'there are multiple roots!';
+        } else if (nodes[roots[0].index].component.name != 'net') {
+            throw 'root layer is not net!';
+        }
+    
+        let indexMap = Array(nodes.length).fill(-1);
+        let stack = [roots[0].index];
+        let counter = 0;
+        while (stack.length > 0) {
+            let from = stack.pop();
+    
+            // map old index to new index
+            indexMap[from] = counter;
+            counter += 1;
+    
+            let shortcuts = [], routes = [], others = [];
+            fromTo[from].forEach(to => {
+                degrees[to] -= 1;
+                if (degrees[to] == 0) {
+                    switch (nodes[to].component.name) {
+                        case 'shortcut':
+                            shortcuts.push(to);
+                            break;
+                        case 'route':
+                            routes.push(to);
+                            break;
+                        default:
+                            others.push(to);
+                    }
+                }
+            });
+    
+            // priority: others > shortcut > route
+            routes.forEach(e => stack.push(e));
+            shortcuts.forEach(e => stack.push(e));
+            others.forEach(e => stack.push(e));
+        }
+    
+        if (degrees.filter(d => d > 0).length > 0) {
+            throw 'There is cycle in the flowchart!';
+        }
+
+        let newNodes = Array(nodes.length).fill(null);
+        nodes.forEach(node => {
+            let newIndex = indexMap[node.index];
+            newNodes[newIndex] = {
+                index: newIndex,
+                component: node.component,
+            };
+        });
+
+        let newEdges = new Set();
+        edges.forEach(edge => {
+            newEdges.add({from: indexMap[edge.from], to: indexMap[edge.to]});
+        });
+
+        return {nodes: newNodes, edges: newEdges};
+    };
+
+    let rebuildNodes = (nodes, edges) => {
+        let fromEdges = Array(nodes.length).fill(null).map(e => new Array(0));
+        edges.forEach(edge => {
+            fromEdges[edge.to].push(edge.from);
+        });
+        let newNodes = nodes.map(node => {
+            let inputIndices = fromEdges[node.index];
+
+            delete node.component.args.from;
+            delete node.component.args.layers;
+
+            switch (node.component.name) {
+                case 'net':
+                    if (inputIndices.length > 0) {
+                        throw 'net should not have input!';
+                    }
+                    break;
+                case 'shortcut':
+                    if (inputIndices.length != 2) {
+                        throw 'shortcut must have 2 inputs!';
+                    }
+                    if (inputIndices[0] == node.index - 1) {
+                        let indexDiff = inputIndices[1] - node.index;
+                        if (indexDiff >= 0) {
+                            throw 'shortcut must have previous layer as input!';
+                        }
+                        node.component.args.from = indexDiff;
+                    } else if (inputIndices[1] == node.index - 1) {
+                        let indexDiff = inputIndices[0] - node.index;
+                        if (indexDiff >= 0) {
+                            throw 'shortcut must have previous layer as input!';
+                        }
+                        node.component.args.from = indexDiff;
+                    } else {
+                        throw 'shortcut must have previous layer as input!';
+                    }
+                    break;
+                case 'route':
+                    if (inputIndices.length == 0) {
+                        throw 'route must have input!';
+                    }
+                    node.component.args.layers = inputIndices
+                        .map(i => {
+                            let indexDiff = i - node.index;
+                            if (indexDiff < 0) {
+                                return indexDiff;
+                            } else if (indexDiff == 0) {
+                                throw 'route should not have itself as input!';
+                            } else {
+                                return i;
+                            }
+                        })
+                        .join(',');
+                    break;
+                default:
+                    if (inputIndices.length != 1) {
+                        throw (node.component.name + ' must have 1 input!');
+                    }
+                    if (inputIndices[0] != node.index - 1) {
+                        throw (node.component.name + ' must have previous layer as input!');
+                    }
+            }
+            return node;
+        });
+        return newNodes;
+    };
+
+    let g = renumber(graph.nodes, graph.edges);
+    if (g == null) {
+        throw 'fail to renumber graph!';
+    }
+    let newNodes = rebuildNodes(g.nodes, g.edges);
+    return {nodes: newNodes, edges: g.edges};
+};
+
 let exportCfg = () => {
-    let str = global.graph.nodes.map(node => {
+    document.getElementById('cfg').value = '';
+    let newGraph = formatGraph(global.graph);
+    let str = newGraph.nodes.map(node => {
         let argsStr = Object.keys(node.component.args).map(k => {
             return k + '=' + node.component.args[k];
         }).join('\n');
@@ -336,6 +485,7 @@ let exportCfg = () => {
 let importCfg = () => {
     global.cfg = document.getElementById('cfg').value;
     global.graph = buildGraph(parseCfg(global.cfg));
+    console.log(global.graph);
     global.flowchart = initFlowchart(global.graph);
     //appendEventForNode(global.graph);
     //appendEventForSvg();
@@ -343,13 +493,20 @@ let importCfg = () => {
     //updateGraph(flowchart, graph, 3);
 };
 
+let clearDashboard = () => {
+    document.getElementById('node-info').innerHTML = '';
+    global.cfg = document.getElementById('cfg').value = '[net]';
+    global.graph = buildGraph(parseCfg(global.cfg));
+    global.flowchart = initFlowchart(global.graph);
+};
+
 let parseCfg = (cfg) => {
     let components = cfg.replace(/\#.*/g, '').replace(/\[(.*?)\]/g, '\0$1\n')
         .split('\0')
         .filter(e => !(!e || e.length === 0 || !e.trim()))
         .map(e => {
-            let s = e.split(/\n|\r/).filter(e => !(!e || e.length === 0 || !e.trim()))
-            if (s.length > 1 && s[0].trim().length > 0) {
+            let s = e.split(/\n|\r/).filter(e => !(!e || e.length === 0 || !e.trim()));
+            if (s.length > 0 && s[0].trim().length > 0) {
                 let name = s[0].trim();
                 let args = {};
                 for (let i = 1; i < s.length; i++) {
@@ -364,4 +521,9 @@ let parseCfg = (cfg) => {
         })
         .filter(e => e);
     return components;
+};
+
+window.onload = () => {
+    // init
+    clearDashboard();
 };

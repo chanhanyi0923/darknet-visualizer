@@ -48,9 +48,14 @@ body {
 
 #dashboard {
   width: 100%;
-  height: 800px;
+  height: 700px;
   overflow-y: scroll;
   overflow-x: auto;
+}
+
+#dashboard-control {
+  width: 100%;
+  height: 100px;
 }
 
 #node-editor-wrapper {
@@ -85,9 +90,11 @@ body {
         </div>
         <div class="col-6 center-panel">
           <br>
-          <div id="dashboard">
+          <div id="dashboard-control">
+            <a herf="#" onclick="clearDashboard()" class="btn btn-secondary">Clear</a>
             <a href="#" onclick="createNode(global.graph, global.flowchart)" class="btn btn-primary">Create node</a>
-            <br>
+          </div>
+          <div id="dashboard">
             <canvas id="myCanvas" width="100" height="100" tabindex="1"></canvas>
           </div>
           <div id="divSelectedNode"></div>
