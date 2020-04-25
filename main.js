@@ -130,6 +130,22 @@ let showNodeDetail = (nodeIndex) => {
     info.innerHTML = text.join('\n');
 };
 
+let addAttribute = () => {
+    let attributes = document.getElementById('nodeAttributes');
+    let newAttributeName = document.getElementById('new-attribute-name').value;
+    attributes.innerHTML += `
+    <div class="form-group row">
+        <label class="col-sm-4 col-form-label">${newAttributeName}</label>
+        <div class="col-sm-5">
+            <input type="text" class="form-control" name="${newAttributeName}" value="value">
+        </div>
+        <div class="col-sm-3">
+            <a href="#" onclick="" class="btn btn-danger btn-block">&times;</a>
+        </div>
+    </div>
+    `;
+};
+
 let showNodeEditor = (nodeIndex) => {
     let info = document.getElementById('node-info');
     let node = global.graph.nodes[nodeIndex];
@@ -140,23 +156,38 @@ let showNodeEditor = (nodeIndex) => {
                 <input type="text" class="form-control" id="node-editor-component-name" name="component-name" value="${node.component.name}">
             </div>
         </div>`,
+        '<span id="nodeAttributes">',
     ];
     Object.keys(node.component.args).forEach(k => {
         let v = node.component.args[k];
         text.push(`
         <div class="form-group row">
-            <label class="col-sm-6 col-form-label">${k}</label>
-            <div class="col-sm-6">
+            <label class="col-sm-4 col-form-label">${k}</label>
+            <div class="col-sm-5">
                 <input type="text" class="form-control" name="${k}" value="${v}">
+            </div>
+            <div class="col-sm-3">
+                <a href="#" onclick="" class="btn btn-danger btn-block">&times;</a>
             </div>
         </div>
         `);
     });
 
     text.push(`
-        <div class="form-group row">
-            <div class="col-sm-6">
-                <button type="submit" class="btn btn-primary">Save</button>
+        </span>
+        <div class="form-group">
+            <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+    </form>
+    <hr>
+    <form>
+        <div class="from-group row">
+            <label class="col-sm-4 col-form-label">attribute name</label>
+            <div class="col-sm-5">
+                <input type="text" class="form-control" id="new-attribute-name" value="new_attribute_name">
+            </div>
+            <div class="col-sm-3">
+                <a href="#" onclick="addAttribute()" class="btn btn-info btn-block">Add</a>
             </div>
         </div>
     </form>
@@ -213,7 +244,11 @@ let initFlowchart = (graph) => {
     });
     document.addEventListener('selectionChanged', e => showNodeDetail(e.detail));
     document.addEventListener('nodesLinked', (e) => {
-        global.graph.edges.add({from: e.detail.from, to: e.detail.to});
+        let edge = {from: e.detail.from, to: e.detail.to};
+        // linear check if edge already existed in graph
+        if (global.graph.edges.filter(e2 => e2.from == edge.from && e2.to == edge.to).length == 0) {
+            global.graph.edges.push(edge);
+        }
     });
     document.addEventListener('clickNode', e => showNodeEditor(e.detail));
 
@@ -225,7 +260,7 @@ let initFlowchart = (graph) => {
 };
 
 let buildGraph = (components) => {
-    let nodes = [], edges = new Set();
+    let nodes = [], edges = [];
     components.forEach((component, index) => {
         nodes.push({ 'index': index, 'component': component });
         if (index > 0) {
@@ -233,8 +268,8 @@ let buildGraph = (components) => {
                 case 'shortcut':
                     if (component.args.from != null) {
                         let fromIndex = index + parseInt(component.args.from);
-                        edges.add({ 'from': fromIndex, 'to': index });
-                        edges.add({ 'from': index - 1, 'to': index });
+                        edges.push({ 'from': fromIndex, 'to': index });
+                        edges.push({ 'from': index - 1, 'to': index });
                     }
                     break;
                 case 'route':
@@ -245,15 +280,15 @@ let buildGraph = (components) => {
                             .forEach(layer => {
                                 let layerIndex = parseInt(layer);
                                 if (layerIndex >= 0) {
-                                    edges.add({ 'from': layerIndex, 'to': index });
+                                    edges.push({ 'from': layerIndex, 'to': index });
                                 } else {
-                                    edges.add({ 'from': index + layerIndex, 'to': index });
+                                    edges.push({ 'from': index + layerIndex, 'to': index });
                                 }
                             });
                     }
                     break;
                 default:
-                    edges.add({ 'from': index - 1, 'to': index });
+                    edges.push({ 'from': index - 1, 'to': index });
             }
         }
     });

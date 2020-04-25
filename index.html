@@ -38,8 +38,7 @@ body {
 }
 
 #cfg {
-  font-family: monospace; 
-  height: 780px;
+  font-family: monospace;
 }
 
 #flowchart {
@@ -71,26 +70,28 @@ body {
       <h1>Hello, world!</h1>
       <br><br>
       <div class="row">
-        <div class="col-3 left-panel">
+        <div class="col-12 left-panel">
           <br>
           <div class="form-group">
-            <textarea id="cfg" class="form-control"></textarea>
+            <textarea id="cfg" class="form-control" rows="10"></textarea>
           </div>
           <br>
         </div>
-        <div class="col-1">
+        <!-- <div class="col-1">
           <div class="row" style="height: 100%">
             <div class="col-6">
-              <a href="#" class="btn btn-success" id="import-button" onclick="exportCfg()" style="height: 100%">&#x3C;</a>
+              <a href="#" class="btn btn-success" id="import-button" onclick="exportCfg()">&#x3C;</a>
             </div>
             <div class="col-6">
-              <a href="#" class="btn btn-info" id="export-button" onclick="importCfg()" style="height: 100%">&#x3E;</a>
+              <a href="#" class="btn btn-info" id="export-button" onclick="importCfg()">&#x3E;</a>
             </div>
           </div>
-        </div>
-        <div class="col-6 center-panel">
+        </div> -->
+        <div class="col-8 center-panel">
           <br>
           <div id="dashboard-control">
+            <a href="#" class="btn btn-success" id="import-button" onclick="exportCfg()">↑</a>
+            <a href="#" class="btn btn-info" id="export-button" onclick="importCfg()">↓</a>
             <a herf="#" onclick="clearDashboard()" class="btn btn-secondary">Clear</a>
             <a href="#" onclick="createNode(global.graph, global.flowchart)" class="btn btn-primary">Create node</a>
           </div>
@@ -100,7 +101,7 @@ body {
           <div id="divSelectedNode"></div>
           <br>
         </div>
-        <div class="col-2 right-panel">
+        <div class="col-4 right-panel">
           <br>
           <div id="node-editor-wrapper">
             <div class="card">
