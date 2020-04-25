@@ -53,11 +53,6 @@ let renderFlowchart = (flowchart) => {
     svg.attr('height', flowchart.graph().height + 40);
 };
 
-// let link = () => {
-//     let from = parseInt(document.getElementById('from-index').value);
-//     let to = parseInt(document.getElementById('to-index').value);
-// };
-
 let createNode = (graph, flowchart) => {
     let index = graph.nodes.length;
     let node = {
@@ -82,12 +77,6 @@ let createNode = (graph, flowchart) => {
     flowchartConfig.newNodePlace.y += 20;
 
     flowchart.draw();
-    // global.flowchart.setNode(node.index, {
-    //     label: node.index + ': hello',
-    //     id: 'n-' + node.index,
-    //     class: 't-' + node.component.name,
-    // });
-    // renderFlowchart(global.flowchart);
 };
 
 let autoLayout = (nodeNum, edges, padding) => {
@@ -194,10 +183,6 @@ let showNodeEditor = (nodeIndex) => {
 };
 
 let initFlowchart = (graph) => {
-    // let img = new Image();
-    // img.onload = () => {
-    //     model.draw();
-    // };
     model.clear();
                
     
@@ -213,24 +198,13 @@ let initFlowchart = (graph) => {
             'green',
             flowchartConfig.rectangleRenderer
         ));
-        // flowchart.setNode(node.index, {
-        //     label: node.index + ': ' + node.component.name,
-        //     id: 'n-' + node.index,
-        //     class: 't-' + node.component.name,
-        // });
     });
     graph.edges.forEach(edge => {
-        //flowchart.setEdge(edge.from, edge.to);
-        // model.addLink(new model.link(edge.from, edge.to, 1, 0, 'label'));
         model.addLink(new model.link(edge.from, edge.to, 1, 0, ''));
     });
 
-    // console.log( layout.height);
-    // console.log(document.getElementById('myCanvas').parentElement);
     document.getElementById('myCanvas').width = document.getElementById('myCanvas').parentElement.clientWidth;
     document.getElementById('myCanvas').height = Math.max(700, layout.height);
-    // document.getElementById('myCanvas').parentElement.style.clientWidth = layout.width + 10;
-    // document.getElementById('myCanvas').parentElement.style.clientHeight = layout.height + 10;
     model.init('myCanvas');
     model.draw();
 
@@ -248,26 +222,6 @@ let initFlowchart = (graph) => {
     });
 
     return model;
-    // let flowchart = new dagreD3.graphlib.Graph()
-    // .setGraph({})
-    // .setDefaultEdgeLabel(function() { return {}; });
-    // graph.nodes.forEach(node => {
-    //     flowchart.setNode(node.index, {
-    //         label: node.index + ': ' + node.component.name,
-    //         id: 'n-' + node.index,
-    //         class: 't-' + node.component.name,
-    //     });
-    // });
-    // flowchart.nodes().forEach(function(v) {
-    //     let node = flowchart.node(v);
-    //     node.rx = node.ry = 5;
-    // });
-    // graph.edges.forEach(edge => {
-    //     flowchart.setEdge(edge.from, edge.to);
-    // });
-    // renderFlowchart(flowchart);
-
-    // return flowchart;
 };
 
 let buildGraph = (components) => {
@@ -305,20 +259,6 @@ let buildGraph = (components) => {
     });
     return { 'nodes': nodes, 'edges': edges };
 };
-
-// let appendEventForNode = (graph) => {
-//     graph.nodes.forEach(node => {
-//         let id = 'n-' + node.index;
-//         document.getElementById(id).addEventListener('mouseover', () => {
-//             let componentDetail = JSON.stringify(node.component.args);
-//             document.getElementById('node-info').innerHTML = componentDetail;
-//         });
-
-//         document.getElementById(id).addEventListener('mouseout', () => {
-//             document.getElementById('node-info').innerHTML = '';
-//         });
-//     });
-// };
 
 let formatGraph = (graph) => {
     let renumber = (nodes, edges) => {
@@ -487,10 +427,6 @@ let importCfg = () => {
     global.graph = buildGraph(parseCfg(global.cfg));
     console.log(global.graph);
     global.flowchart = initFlowchart(global.graph);
-    //appendEventForNode(global.graph);
-    //appendEventForSvg();
-    //console.log( exportCfg(graph) );
-    //updateGraph(flowchart, graph, 3);
 };
 
 let clearDashboard = () => {
