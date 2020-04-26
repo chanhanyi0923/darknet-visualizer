@@ -118,12 +118,26 @@ let showNodeDetail = (nodeIndex) => {
     ];
     Object.keys(node.component.args).forEach(k => {
         let v = node.component.args[k];
-        text.push(`
-        <div class="form-group row">
-            <label class="col-sm-6 col-form-label">${k}</label>
-            <label class="col-sm-6 col-form-label"><span class="badge badge-info">${v}</span></label>
-        </div>
-        `);
+        let multipleValues = v.split(',');
+        if (multipleValues.length > 1) {
+            text.push(`
+                <div class="form-group row">
+                    <label class="col-sm-6 col-form-label">${k}</label>
+                    <label class="col-sm-6 col-form-label">
+            `);
+            text.push(multipleValues.map(e => '<span class="badge badge-success">' + e + '</span>').join('&nbsp;'));
+            text.push(`
+                    </label>
+                </div>
+            `);
+        } else {
+            text.push(`
+            <div class="form-group row">
+                <label class="col-sm-6 col-form-label">${k}</label>
+                <label class="col-sm-6 col-form-label"><span class="badge badge-info">${v}</span></label>
+            </div>
+            `);
+        }
     });
 
     text.push('</form>');
@@ -450,16 +464,27 @@ let formatGraph = (graph) => {
 };
 
 let exportCfg = () => {
-    document.getElementById('cfg').value = '';
-    let newGraph = formatGraph(global.graph);
-    let str = newGraph.nodes.map(node => {
-        let argsStr = Object.keys(node.component.args).map(k => {
-            return k + '=' + node.component.args[k];
-        }).join('\n');
-        return '[' + node.component.name + ']\n' + argsStr;
-    }).join('\n\n');
+    try {
+        document.getElementById('cfg').value = '';
+        let newGraph = formatGraph(global.graph);
+        let str = newGraph.nodes.map(node => {
+            let argsStr = Object.keys(node.component.args).map(k => {
+                return k + '=' + node.component.args[k];
+            }).join('\n');
+            return '[' + node.component.name + ']\n' + argsStr;
+        }).join('\n\n');
 
-    document.getElementById('cfg').value = str;
+        document.getElementById('cfg').value = str;
+    } catch (e) {
+        document.getElementById('error-message').innerHTML += `
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            ${e}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        `;
+    }
 };
 
 let importCfg = () => {
