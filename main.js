@@ -232,6 +232,29 @@ let showNodeEditor = (nodeIndex) => {
     });
 };
 
+let appendListenersForFlowchart = () => {
+    document.addEventListener('releaseNode', () => {
+        document.getElementById('node-info').innerHTML = '';
+    });
+    document.addEventListener('selectionChanged', e => showNodeDetail(e.detail));
+    document.addEventListener('nodesLinked', (e) => {
+        let edge = {from: e.detail.from, to: e.detail.to};
+        // linear check if edge already existed in graph
+        if (global.graph.edges.filter(e2 => e2.from == edge.from && e2.to == edge.to).length == 0) {
+            global.graph.edges.push(edge);
+        }
+    });
+    document.addEventListener('clickNode', e => showNodeEditor(e.detail));
+
+    document.addEventListener('clickLink', (e) => {
+        let edge = {from: e.detail.from, to: e.detail.to};
+        // remove edge
+        global.graph.edges = global.graph.edges.filter(e2 => !(e2.from == edge.from && e2.to == edge.to));
+        model.removeLinkByFromTo(edge.from, edge.to);
+        model.draw();
+    });
+};
+
 let initFlowchart = (graph) => {
     model.clear();
                
@@ -258,22 +281,7 @@ let initFlowchart = (graph) => {
     model.init('myCanvas');
     model.draw();
 
-    document.addEventListener('releaseNode', () => {
-        document.getElementById('node-info').innerHTML = '';
-    });
-    document.addEventListener('selectionChanged', e => showNodeDetail(e.detail));
-    document.addEventListener('nodesLinked', (e) => {
-        let edge = {from: e.detail.from, to: e.detail.to};
-        // linear check if edge already existed in graph
-        if (global.graph.edges.filter(e2 => e2.from == edge.from && e2.to == edge.to).length == 0) {
-            global.graph.edges.push(edge);
-        }
-    });
-    document.addEventListener('clickNode', e => showNodeEditor(e.detail));
-
-    document.addEventListener('clickLink', (e) => {
-        console.log(e.detail);
-    });
+    appendListenersForFlowchart();
 
     return model;
 };

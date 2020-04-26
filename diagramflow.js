@@ -1055,7 +1055,7 @@ var mouse = {
             // document.body.appendChild(ed);
         }
         if (mouse.selLink != null) {
-            var event = new CustomEvent("clickLink", { "detail": mouse.selLink });
+            var event = new CustomEvent("clickLink", { "detail": model.links[mouse.selLink]});
             document.dispatchEvent(event);
 
             // mouse.editText = true;
