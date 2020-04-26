@@ -1,0 +1,26 @@
+{
+  "name": "darknet-visualizer",
+  "version": "1.0.0",
+  "description": "visualizer for darkent model",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chanhanyi0923/darknet-visualizer.git"
+  },
+  "author": "HanYi Chen",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/chanhanyi0923/darknet-visualizer/issues"
+  },
+  "homepage": "https://github.com/chanhanyi0923/darknet-visualizer#readme",
+  "dependencies": {
+    "bootstrap": "^4.4.1",
+    "dagre": "^0.8.5",
+    "electron": "^8.2.3",
+    "jquery": "^3.5.0",
+    "popper.js": "^1.16.1"
+  }
+}

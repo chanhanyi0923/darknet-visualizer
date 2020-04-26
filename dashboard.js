@@ -1,3 +1,9 @@
+window.$ = window.jQuery = require('jquery');
+require('popper.js');
+require('bootstrap');
+let dagre = require('dagre');
+import model from './diagramflow.js';
+
 let global = {
     'cfg': {},
     'graph': {},
@@ -20,7 +26,7 @@ let flowchartConfig = {
         node.textfill(ctx);
     },
     connectors: [
-        new model.connector(0.5, 0, 'output', 'output', {
+        new model.connector(0.5, 0, 'input', 'input', {
             fillStyle: 'DarkSeaGreen',
             strokeStyle: 'green',
             highlightStrokeStyle: 'black',
@@ -30,7 +36,7 @@ let flowchartConfig = {
             dragAllowed: false,
             radius: 7
         }),
-        new model.connector(0.5, 1, 'input', 'input', {
+        new model.connector(0.5, 1, 'output', 'output', {
             fillStyle: 'PowderBlue',
             strokeStyle: 'blue',
             highlightStrokeStyle: 'black',
@@ -154,10 +160,18 @@ let addAttributeRow = () => {
             <input type="text" class="form-control" name="${newAttributeName}" value="value">
         </div>
         <div class="col-sm-3">
-            <a href="#" onclick="removeAttributeRow(this)" class="btn btn-danger btn-block">&times;</a>
+            <a href="#" class="remove-attribute-row-button btn btn-danger btn-block">&times;</a>
         </div>
     </div>
     `;
+
+    let btns = document.getElementsByClassName('remove-attribute-row-button');
+    for (let btn of btns) {
+        btn.addEventListener('click', e => {
+            removeAttributeRow(e.currentTarget);
+            e.preventDefault();
+        });
+    }
 };
 
 let removeAttributeRow = (e) => {
@@ -186,7 +200,7 @@ let showNodeEditor = (nodeIndex) => {
                 <input type="text" class="form-control" name="${k}" value="${v}">
             </div>
             <div class="col-sm-3">
-                <a href="#" onclick="removeAttributeRow(this)" class="btn btn-danger btn-block">&times;</a>
+                <a href="#" class="remove-attribute-row-button btn btn-danger btn-block">&times;</a>
             </div>
         </div>
         `);
@@ -196,7 +210,7 @@ let showNodeEditor = (nodeIndex) => {
         </span>
         <div class="form-group">
             <button type="submit" class="btn btn-primary">Save</button>
-            <a href="#" class="btn btn-danger" onclick="removeNodeByIndex(${nodeIndex})">Delete</a>
+            <a href="#" id="remove-node-button" class="btn btn-danger">Delete</a>
         </div>
     </form>
     <hr>
@@ -207,12 +221,31 @@ let showNodeEditor = (nodeIndex) => {
                 <input type="text" class="form-control" id="new-attribute-name" value="new_attribute_name">
             </div>
             <div class="col-sm-3">
-                <a href="#" onclick="addAttributeRow()" class="btn btn-info btn-block">Add</a>
+                <a href="#" id="add-attribute-row-button" class="btn btn-info btn-block">Add</a>
             </div>
         </div>
     </form>
     `);
     info.innerHTML = text.join('\n');
+
+    document.getElementById('add-attribute-row-button').addEventListener('click', e => {
+        addAttributeRow();
+        e.preventDefault();
+    });
+
+    let btns = document.getElementsByClassName('remove-attribute-row-button');
+    for (let btn of btns) {
+        btn.addEventListener('click', e => {
+            removeAttributeRow(e.currentTarget);
+            e.preventDefault();
+        });
+    }
+
+    document.getElementById('remove-node-button').addEventListener('click', (e) => {
+        removeNodeByIndex(nodeIndex);
+        e.preventDefault();
+    });
+
     let form = document.getElementById('modifyNode');
     form.addEventListener('submit', (e) => {
         //console.log(form);
@@ -227,7 +260,7 @@ let showNodeEditor = (nodeIndex) => {
         let component = {name: name, args: args};
         node.component = component;
         showNodeDetail(nodeIndex);
-        model.nodes[mouse.selNode].text = name;
+        model.nodes[nodeIndex].text = name;
         e.preventDefault();
         return false;
     });
@@ -270,7 +303,7 @@ let initFlowchart = (graph) => {
     model.clear();
                
     
-    layout = autoLayout(graph.nodes.length, graph.edges, 200);
+    let layout = autoLayout(graph.nodes.length, graph.edges, 200);
     graph.nodes.forEach(node => {
         model.addNode(new model.node(
             layout.nodes[node.index].x,
@@ -545,7 +578,30 @@ let parseCfg = (cfg) => {
     return components;
 };
 
+let setupButtons = () => {
+    document.getElementById('import-button').addEventListener('click', (e) => {
+        exportCfg();
+        e.preventDefault();
+    });
+
+    document.getElementById('export-button').addEventListener('click', (e) => {
+        importCfg();
+        e.preventDefault();
+    });
+
+    document.getElementById('clear-dashboard-button').addEventListener('click', (e) => {
+        clearDashboard();
+        e.preventDefault();
+    });
+
+    document.getElementById('create-node-button').addEventListener('click', (e) => {
+        createNode(global.graph, global.flowchart);
+        e.preventDefault();
+    });
+};
+
 window.onload = () => {
     // init
     clearDashboard();
+    setupButtons();
 };

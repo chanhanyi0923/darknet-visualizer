@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
     <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
+    <link rel="stylesheet" href="./node_modules/bootstrap/dist/css/bootstrap.min.css">
 
     <title>Visualizer</title>
     <style>
@@ -47,7 +47,7 @@ body {
 
 #dashboard {
   width: 100%;
-  height: 700px;
+  height: 600px;
   overflow-y: scroll;
   overflow-x: auto;
 }
@@ -59,7 +59,7 @@ body {
 
 #node-editor-wrapper {
   width: 100%;
-  height: 800px;
+  height: 700px;
   overflow-y: auto;
   overflow-x: auto;
 }
@@ -75,23 +75,13 @@ body {
           </div>
           <br>
         </div>
-        <!-- <div class="col-1">
-          <div class="row" style="height: 100%">
-            <div class="col-6">
-              <a href="#" class="btn btn-success" id="import-button" onclick="exportCfg()">&#x3C;</a>
-            </div>
-            <div class="col-6">
-              <a href="#" class="btn btn-info" id="export-button" onclick="importCfg()">&#x3E;</a>
-            </div>
-          </div>
-        </div> -->
         <div class="col-8 center-panel">
           <br>
           <div id="dashboard-control">
-            <a href="#" class="btn btn-success" id="import-button" onclick="exportCfg()">↑</a>
-            <a href="#" class="btn btn-info" id="export-button" onclick="importCfg()">↓</a>
-            <a herf="#" onclick="clearDashboard()" class="btn btn-secondary">Clear</a>
-            <a href="#" onclick="createNode(global.graph, global.flowchart)" class="btn btn-primary">Create node</a>
+            <a href="#" class="btn btn-success" id="import-button">↑</a>
+            <a href="#" class="btn btn-info" id="export-button">↓</a>
+            <a herf="#" id="clear-dashboard-button" class="btn btn-secondary">Clear</a>
+            <a href="#" id="create-node-button" class="btn btn-primary">Create node</a>
             <br>
             <span id="error-message"></span>
           </div>
@@ -113,12 +103,6 @@ body {
         </div>
       </div>
     </div>
-
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut" crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
-    <script src="diagramflow.js"></script>
-    <script src="https://dagrejs.github.io/project/dagre/latest/dagre.js"></script>
-    <script src="dashboard.js.js"></script>
+    <script type="module" src="./dashboard.js"></script>
   </body>
 </html>

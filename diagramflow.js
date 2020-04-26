@@ -1085,3 +1085,5 @@ var mouse = {
         }
     }
 }
+
+export default model;
