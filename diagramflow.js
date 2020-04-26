@@ -836,10 +836,8 @@ var mouse = {
 
                 mouse.linkDestNode = null;
                 //CHECK DESTINATION connector
-                for (let j = 0; j < model.nodes.length; j++) {
+                model.nodes.some((element, j) => {
                     if (j != mouse.selConnectorNode) {
-                        const element = model.nodes[j];
-
                         var i = element.isInsideConnectors(mouseC);
                         if (i != null) {
                             if (element.connectors[i].options.dropAllowed && (element.connectors[i].mode != model.nodes[mouse.selConnectorNode].connectors[mouse.selConnector].mode || element.connectors[i].mode == "mixed")) {
@@ -847,10 +845,11 @@ var mouse = {
                                 mouse.linkDestConnector = i;
                                 element.connectors[i].highlight(model.ctx, element.x, element.y, element.w, element.h);
                             }
-                            break;
+                            return true;
                         }
                     }
-                }
+                    return false;
+                });
                 break;
             case "move":
                 model.nodes[mouse.selNode].x = mouseC.x - mouse.dragOrigin.x;
@@ -939,21 +938,19 @@ var mouse = {
                     }
 
                     //CHECK CONNECTOR
-                    var found = false;
-                    for (let j = 0; j < model.nodes.length; j++) {
-                        const element = model.nodes[j];
-
+                    var found = model.nodes.some((element, j) => {
                         var i = element.isInsideConnectors(mouseC);
                         if (i != null) {
                             if (element.connectors[i].options.dragAllowed) {
                                 mouse.selConnector = i;
                                 mouse.selConnectorNode = j;
                                 element.connectors[mouse.selConnector].highlight(model.ctx, element.x, element.y, element.w, element.h);
-                                found = true;
-                                break;
+                                return true;
                             }
                         }
-                    }
+                        return false;
+                    });
+
                     if (!found) {
                         mouse.selConnector = null;
                         mouse.selConnectorNode = null;
@@ -961,21 +958,18 @@ var mouse = {
                     }
                 }
                 else {
-                    var found = false;
-                    for (let j = 0; j < model.nodes.length; j++) {
-                        const element = model.nodes[j];
-
+                    var found = model.nodes.some((element, j) => {
                         var i = element.isInsideConnectors(mouseC);
                         if (i != null) {
                             if (element.connectors[i].options.dragAllowed) {
                                 mouse.selConnector = i;
                                 mouse.selConnectorNode = j;
                                 element.connectors[mouse.selConnector].highlight(model.ctx, element.x, element.y, element.w, element.h);
-                                found = true;
-                                break;
+                                return true;
                             }
                         }
-                    }
+                        return false;
+                    });
                     if (!found) {
                         mouse.selConnector = null;
                         mouse.selConnectorNode = null;
