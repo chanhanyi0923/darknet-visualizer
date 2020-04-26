@@ -196,6 +196,7 @@ let showNodeEditor = (nodeIndex) => {
         </span>
         <div class="form-group">
             <button type="submit" class="btn btn-primary">Save</button>
+            <a href="#" class="btn btn-danger" onclick="removeNodeByIndex(${nodeIndex})">Delete</a>
         </div>
     </form>
     <hr>
@@ -232,6 +233,19 @@ let showNodeEditor = (nodeIndex) => {
     });
 };
 
+let removeNodeByIndex = (index) => {
+    global.graph.edges = global.graph.edges.filter(e2 => !(e2.from == index || e2.to == index));
+    delete global.graph.nodes[index];
+    model.removeNodeByIndex(index);
+    model.draw();
+};
+
+let removeEdge = (edge) => {
+    global.graph.edges = global.graph.edges.filter(e2 => !(e2.from == edge.from && e2.to == edge.to));
+    model.removeLinkByFromTo(edge.from, edge.to);
+    model.draw();
+};
+
 let appendListenersForFlowchart = () => {
     document.addEventListener('releaseNode', () => {
         document.getElementById('node-info').innerHTML = '';
@@ -248,10 +262,7 @@ let appendListenersForFlowchart = () => {
 
     document.addEventListener('clickLink', (e) => {
         let edge = {from: e.detail.from, to: e.detail.to};
-        // remove edge
-        global.graph.edges = global.graph.edges.filter(e2 => !(e2.from == edge.from && e2.to == edge.to));
-        model.removeLinkByFromTo(edge.from, edge.to);
-        model.draw();
+        removeEdge(edge);
     });
 };
 
@@ -333,7 +344,8 @@ let formatGraph = (graph) => {
     
         let roots = degrees
             .map((d, i) => { return {index: i, degree: d} })
-            .filter(e => e.degree == 0);
+            .filter(e => e.degree == 0)
+            .filter(e => nodes[e.index]);
         if (roots.length == 0) {
             throw 'root layer does not exist!';
         } else if (roots.length > 1) {
@@ -380,13 +392,14 @@ let formatGraph = (graph) => {
         }
 
         let newNodes = Array(nodes.length).fill(null);
-        nodes.forEach(node => {
+        nodes.filter(e => e).forEach(node => {
             let newIndex = indexMap[node.index];
             newNodes[newIndex] = {
                 index: newIndex,
                 component: node.component,
             };
         });
+        newNodes = newNodes.filter(e => e);
 
         let newEdges = new Set();
         edges.forEach(edge => {
