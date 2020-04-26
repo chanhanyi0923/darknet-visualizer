@@ -19,8 +19,18 @@ var model = {
     addNode: function (node) {
         this.nodes.push(node);
     },
+
     addLink: function (link) {
         this.links.push(link);
+    },
+
+    removeNodeByIndex: function (nodeIndex) {
+        delete this.nodes[nodeIndex];
+        this.links = this.links.filter(l => !(nodeIndex == l.from || nodeIndex == l.to));
+    },
+
+    removeLinkByFromTo: function (fromIndex, toIndex) {
+        this.links = this.links.filter(l => !(fromIndex == l.from && toIndex == l.to));
     },
 
     clean: function () {
@@ -37,9 +47,9 @@ var model = {
 
     draw: function () {
         this.clean();
-        for (let index = 0; index < this.nodes.length; index++) {
-            this.nodes[index].draw(this.ctx);
-        }
+        this.nodes.forEach(node => {
+            node.draw(this.ctx);
+        });
 
         for (let index = 0; index < this.links.length; index++) {
             this.links[index].draw(this.ctx);
@@ -48,6 +58,7 @@ var model = {
             this.nodes[mouse.selNode].highlight(this.ctx);
         }
     },
+
     init: function (canvasName) {
         this.myCanvas = document.getElementById(canvasName);
         //this.myCanvasContainer = document.getElementById(canvasName).parentElement;
@@ -72,46 +83,23 @@ var model = {
     findNode: function (mouseC) {
         var minArea = 34435345345344;
         var selIndex = null;
-        for (let index = 0; index < this.nodes.length; index++) {
-            if (this.nodes[index].isInside(mouseC.x, mouseC.y)) {
-                var calcArea = this.nodes[index].w * this.nodes[index].h;
+        this.nodes.forEach((node, index) => {
+            if (node.isInside(mouseC.x, mouseC.y)) {
+                var calcArea = node.w * node.h;
                 if (calcArea < minArea) {
                     selIndex = index;
                     minArea = calcArea;
                 }
             }
-        }
+        });
         return selIndex;
-    },
-
-    copyFrom: function (sourceModel) {
-        model.nodes = [];
-        if (sourceModel.nodes) {
-            for (let index = 0; index < sourceModel.nodes.length; index++) {
-                const element = sourceModel.nodes[index];
-                var anchors = [];
-                element.anchors.forEach(a => {
-                    anchors.push(new model.anchor(a.x, a.y, a.cursorClass));
-                });
-                model.addNode(new model.node(element.x, element.y, element.w, element.h, anchors, element.text, element.fillStyle, element.figure, element.data));
-            }
-        }
-        model.links = [];
-        if (sourceModel.links) {
-            for (let index = 0; index < sourceModel.links.length; index++) {
-                const element = sourceModel.links[index];
-
-                model.addLink(new model.link(element.from, element.to, element.anchorFrom, element.anchorTo, element.text));
-            }
-        }
-        mouse.selNode = null;
-        mouse.dragging = null;
     },
 
     selectNode: function (node) {
         mouse.selNode = node;
         model.draw();
     },
+
     connector: function (x, y, mode, title, decoration, options) {
         this.x = x;
         this.y = y;
@@ -176,6 +164,7 @@ var model = {
                 return false;
         };
     },
+
     anchor: function (x, y, cursorClass) {
         this.x = x;
         this.y = y;
@@ -210,6 +199,7 @@ var model = {
                 return false;
         };
     },
+
     node: function (x, y, w, h, connectors, text, fillStyle, figure, args) {
         this.textfill = function (ctx) {
             var fontSize = 16;
@@ -339,6 +329,7 @@ var model = {
             });
         }
     },
+
     link: function (from, to, anchorIndexFrom, anchorIndexTo, text, mode) {
         this.directionToVector = function (cursorClass) {
             switch (cursorClass) {
@@ -415,7 +406,6 @@ var model = {
                     // var dym=(aC1.y+aC2.y)/2;
                     // this.segments.push({x:dxm,y:aC1.y});
                     // this.segments.push({x:dxm,y:aC2.y});
-
 
                     // this.segments.push({x:aC2.x,y:aC2.y});
 
@@ -522,10 +512,8 @@ var model = {
                     }
                     this.segments.push({ x: aC2.x, y: aC2.y });
 
-
                 }
                 this.segments.push({ x: origaC2x, y: origaC2y });
-
 
             }
 
@@ -654,6 +642,7 @@ var model = {
             return false;
         }
     },
+
     defaultAnchors: function (figure) {
         var anchors = [];
         switch (figure.name) {
@@ -703,8 +692,8 @@ var model = {
         }
         return anchors;
     }
-
 };
+
 var mouse = {
     dragging: false,
     dragOrigin: {},
@@ -714,10 +703,12 @@ var mouse = {
     selConnector: null,
     selLink: null,
     editText: false,
+
     mouseCoords: function (ev) {
         var rect = model.myCanvas.getBoundingClientRect();
         return { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
     },
+
     down: function (ev) {
         if (mouse.editText) {
             mouse.editText = false;
@@ -766,8 +757,7 @@ var mouse = {
                 };
 
                 var hostNode = model.nodes[mouse.selNode];
-                for (let i = 0; i < model.nodes.length; i++) {
-                    const element = model.nodes[i];
+                model.nodes.forEach((element, i) => {
                     var elemDragOrigin = { x: mouseC.x - element.x, y: mouseC.y - element.y };
 
                     if (i != mouse.selNode && element.x >= hostNode.x && element.x + element.w <= hostNode.x + hostNode.w && element.y >= hostNode.y && element.y + element.h <= hostNode.y + hostNode.h) {
@@ -780,8 +770,7 @@ var mouse = {
                             }
                         };
                     }
-                }
-
+                });
             }
             model.draw();
         }
@@ -813,16 +802,15 @@ var mouse = {
         if (mouse.dragging == null) {
             mouse.dragging = "all";
             this.nodesToMove = [];
-            for (let i = 0; i < model.nodes.length; i++) {
-                const element = model.nodes[i];
+            model.nodes.forEach((element, i) => {
                 var elemDragOrigin = { x: mouseC.x - element.x, y: mouseC.y - element.y };
 
                 this.nodesToMove.push({ index: i, elemDragOrigin: elemDragOrigin });
-            }
-
+            });
         }
         //console.log(mouse.selNode + " " + mouse.selAnchor + " " + mouse.dragging)
     },
+
     move: function (ev) {
         var mouseC = mouse.mouseCoords(ev);
         switch (mouse.dragging) {
@@ -1000,6 +988,7 @@ var mouse = {
                 break;
         }
     },
+
     up: function (ev) {
         //var mouseC=mouse.mouseCoords(ev);
 
@@ -1024,6 +1013,7 @@ var mouse = {
             mouse.selConnector = null;
         }
     },
+
     key: function (ev) {
         if (ev.key == "Delete") {
             if (mouse.selNode != null) {
@@ -1045,6 +1035,7 @@ var mouse = {
             }
         }
     },
+
     dblclick: function (ev) {
         if (mouse.selNode != null) {
             var event = new CustomEvent("clickNode", { "detail": mouse.selNode });
