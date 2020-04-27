@@ -49,16 +49,6 @@ let flowchartConfig = {
     ],
 }
 
-let renderFlowchart = (flowchart) => {
-    let render = new dagreD3.render();
-    let svg = d3.select('#flowchart');
-    let svgGroup = svg.append('g');
-    render(d3.select('#flowchart g'), flowchart);
-    let xCenterOffset = (svg.attr('width') - flowchart.graph().width) / 2;
-    svgGroup.attr('transform', 'translate(' + xCenterOffset + ', 20)');
-    svg.attr('height', flowchart.graph().height + 40);
-};
-
 let createNode = (graph, flowchart) => {
     let index = graph.nodes.length;
     let node = {
@@ -75,7 +65,7 @@ let createNode = (graph, flowchart) => {
         flowchartConfig.nodeWidth,
         flowchartConfig.nodeHeight,
         flowchartConfig.connectors,
-        node.index + ': ' + node.component.name,
+        node.component.name,
         'green',
         flowchartConfig.rectangleRenderer
     ));
@@ -301,8 +291,6 @@ let appendListenersForFlowchart = () => {
 
 let initFlowchart = (graph) => {
     model.clear();
-               
-    
     let layout = autoLayout(graph.nodes.length, graph.edges, 200);
     graph.nodes.forEach(node => {
         model.addNode(new model.node(
@@ -311,7 +299,7 @@ let initFlowchart = (graph) => {
             flowchartConfig.nodeWidth,
             flowchartConfig.nodeHeight,
             flowchartConfig.connectors,
-            node.index + ': ' + node.component.name,
+            node.component.name,
             'green',
             flowchartConfig.rectangleRenderer
         ));
