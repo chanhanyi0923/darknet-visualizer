@@ -1,10 +1,16 @@
+const host = 'http://140.112.91.60:23132/';
+
 window.$ = window.jQuery = require('jquery');
 require('popper.js');
 require('bootstrap');
 let dagre = require('dagre');
+let uuid = require("uuid");
+let Plotly = require('plotly.js/lib/core');
 import model from './diagramflow.js';
 
 let global = {
+    'trainingPid': -1,
+    'folderId': 'default',
     'cfg': {},
     'graph': {},
     'flowchart': {},
@@ -566,6 +572,98 @@ let parseCfg = (cfg) => {
     return components;
 };
 
+let createFolder = () => {
+    global.folderId = uuid.v4();
+    const xhr = new XMLHttpRequest();
+    const url = host + 'create/' + global.folderId;
+    xhr.open("POST", url);
+    xhr.send();
+};
+
+let startTraining = () => {
+    const xhr = new XMLHttpRequest();
+    const url = host + 'train/' + global.folderId;
+    xhr.open('POST', url);
+    xhr.onreadystatechange = () => {
+        if (xhr.readyState == 4) {
+            let pid = parseInt(xhr.responseText);
+            global.trainingPid = pid;
+        }
+    };
+    xhr.send();
+};
+
+let stopTraining = () => {
+    const xhr = new XMLHttpRequest();
+    const url = host + 'stop/training/' + global.trainingPid;
+    xhr.open('POST', url);
+    xhr.send();
+};
+
+let saveConfig = (cfg) => {
+    const xhr = new XMLHttpRequest();
+    const url = host + 'cfg/' + global.folderId;
+    let formData = new FormData();
+    formData.append('data', cfg);
+    xhr.open("POST", url);
+    xhr.send(formData);
+};
+
+let plotLoss = () => {
+    const xhr = new XMLHttpRequest();
+    const url = host + 'log/' + global.folderId;
+    xhr.open('GET', url);
+    xhr.onreadystatechange = () => {
+        if (xhr.readyState == 4) {
+            let data = JSON.parse(xhr.responseText);
+            let plotLoss = () => {
+                let x = [], y = [];
+                data.forEach(d => {
+                    x.push(d.iter_num);
+                    y.push(d.loss);
+                });
+                let plotCanvas = document.createElement('div');
+                Plotly.plot(plotCanvas, [{
+                    x: x,
+                    y: y,
+                    marker: {
+                        color: 'DodgerBlue'
+                    }
+                }], {
+                    margin: { t: 1 }
+                });
+                let wrapper = document.getElementById('loss-plot');
+                wrapper.innerHTML = '';
+                wrapper.appendChild(plotCanvas);
+            };
+            let plotLearning = () => {
+                let x = [], y = [];
+                data.forEach(d => {
+                    x.push(d.iter_num);
+                    y.push(d.learning_rate);
+                });
+                let plotCanvas = document.createElement('div');
+                plotCanvas.innerHTML = '';
+                Plotly.plot(plotCanvas, [{
+                    x: x,
+                    y: y,
+                    marker: {
+                        color: 'DodgerBlue'
+                    }
+                }], {
+                    margin: { t: 1 }
+                });
+                let wrapper = document.getElementById('learning-plot');
+                wrapper.innerHTML = '';
+                wrapper.appendChild(plotCanvas);
+            };
+            plotLoss();
+            plotLearning();
+        }
+    };
+    xhr.send(); 
+};
+
 let setupButtons = () => {
     document.getElementById('import-button').addEventListener('click', (e) => {
         exportCfg();
@@ -586,10 +684,42 @@ let setupButtons = () => {
         createNode(global.graph, global.flowchart);
         e.preventDefault();
     });
+
+    document.getElementById('save-config-button').addEventListener('click', (e) => {
+        global.cfg = document.getElementById('cfg').value;
+        saveConfig(global.cfg);
+        e.preventDefault();
+    });
+
+    document.getElementById('start-training-button').addEventListener('click', (e) => {
+        startTraining();
+        e.preventDefault();
+    });
+
+    document.getElementById('stop-training-button').addEventListener('click', (e) => {
+        stopTraining();
+        e.preventDefault();
+    });
+
+    document.getElementById('to-training-link').addEventListener('click', (e) => {
+        document.getElementById('editor').style.display = 'none';
+        document.getElementById('training').style.display = null;
+        plotLoss();
+        e.preventDefault();
+    });
+
+    document.getElementById('to-editor-link').addEventListener('click', (e) => {
+        document.getElementById('editor').style.display = null;
+        document.getElementById('training').style.display = 'none';
+        e.preventDefault();
+    });
 };
 
 window.onload = () => {
     // init
+    createFolder();
+    document.getElementById('editor').style.display = null;
+    document.getElementById('training').style.display = 'none';
     clearDashboard();
     setupButtons();
 };

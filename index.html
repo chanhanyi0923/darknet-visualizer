@@ -63,11 +63,32 @@ body {
   overflow-y: auto;
   overflow-x: auto;
 }
+
+#loss-plot {
+  width: 100%;
+  height: 500px;
+}
     </style>
   </head>
   <body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="#" id="to-editor-link">
+              Editor
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" id="to-training-link">
+              Training
+            </a>
+          </li>
+        </ul>
+      </div>
+    </nav>
     <div class="container-fluid">
-      <div class="row">
+      <div id="editor" class="row">
         <div class="col-12 left-panel">
           <br>
           <div class="form-group">
@@ -78,6 +99,7 @@ body {
         <div class="col-8 center-panel">
           <br>
           <div id="dashboard-control">
+            <a href="#" class="btn btn-primary" id="save-config-button">Save config</a>
             <a href="#" class="btn btn-success" id="import-button">↑</a>
             <a href="#" class="btn btn-info" id="export-button">↓</a>
             <a herf="#" id="clear-dashboard-button" class="btn btn-secondary">Clear</a>
@@ -100,6 +122,22 @@ body {
             </div>
           </div>
           <br>
+        </div>
+      </div>
+
+      <!-- training -->
+      <div id="training" class="row">
+        <div class="col-12">
+          <a href="#" class="btn btn-success" id="start-training-button">Start training</a>
+          <a href="#" class="btn btn-danger" id="stop-training-button">Stop training</a>
+        </div>
+        <div class="col-6">
+          <h2>Loss function</h2>
+          <div id="loss-plot"></div>
+        </div>
+        <div class="col-6">
+          <h2>Learning rate</h2>
+          <div id="learning-plot"></div>
         </div>
       </div>
     </div>

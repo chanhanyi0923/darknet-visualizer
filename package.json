@@ -21,6 +21,8 @@
     "dagre": "^0.8.5",
     "electron": "^8.2.3",
     "jquery": "^3.5.0",
-    "popper.js": "^1.16.1"
+    "plotly.js": "^1.47.4",
+    "popper.js": "^1.16.1",
+    "uuid": "^8.0.0"
   }
 }
