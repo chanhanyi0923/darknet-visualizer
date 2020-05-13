@@ -17,7 +17,7 @@ let global = {
 };
 
 let flowchartConfig = {
-    newNodePlace: {x: 50, y: 50},
+    newNodePlace: { x: 50, y: 50 },
     nodeWidth: 200,
     nodeHeight: 60,
     rectangleRenderer: (ctx, node) => {
@@ -55,13 +55,13 @@ let flowchartConfig = {
     ],
 }
 
-let createNode = (graph, flowchart) => {
+let createNode = (graph, flowchart, nodeName, nodeArgs) => {
     let index = graph.nodes.length;
     let node = {
         'index': index,
         'component': {
-            'name': 'n',
-            'args': 'a',
+            'name': nodeName,
+            'args': nodeArgs,
         },
     };
     graph.nodes.push(node);
@@ -120,7 +120,7 @@ let showNodeDetail = (nodeIndex) => {
     ];
     Object.keys(node.component.args).forEach(k => {
         let v = node.component.args[k];
-        let multipleValues = v.split(',');
+        let multipleValues = (typeof v === 'string') ? v.split(',') : [];
         if (multipleValues.length > 1) {
             text.push(`
                 <div class="form-group row">
@@ -249,11 +249,11 @@ let showNodeEditor = (nodeIndex) => {
         let args = {};
         let inputs = form.getElementsByTagName('input');
         for (let input of inputs) {
-            if(input.name != 'component-name') {
+            if (input.name != 'component-name') {
                 args[input.name] = input.value;
             }
         }
-        let component = {name: name, args: args};
+        let component = { name: name, args: args };
         node.component = component;
         showNodeDetail(nodeIndex);
         model.nodes[nodeIndex].text = name;
@@ -281,7 +281,7 @@ let appendListenersForFlowchart = () => {
     });
     document.addEventListener('selectionChanged', e => showNodeDetail(e.detail));
     document.addEventListener('nodesLinked', (e) => {
-        let edge = {from: e.detail.from, to: e.detail.to};
+        let edge = { from: e.detail.from, to: e.detail.to };
         // linear check if edge already existed in graph
         if (global.graph.edges.filter(e2 => e2.from == edge.from && e2.to == edge.to).length == 0) {
             global.graph.edges.push(edge);
@@ -290,7 +290,7 @@ let appendListenersForFlowchart = () => {
     document.addEventListener('clickNode', e => showNodeEditor(e.detail));
 
     document.addEventListener('clickLink', (e) => {
-        let edge = {from: e.detail.from, to: e.detail.to};
+        let edge = { from: e.detail.from, to: e.detail.to };
         removeEdge(edge);
     });
 };
@@ -368,9 +368,9 @@ let formatGraph = (graph) => {
             fromTo[edge.from].push(edge.to);
             degrees[edge.to] += 1;
         });
-    
+
         let roots = degrees
-            .map((d, i) => { return {index: i, degree: d} })
+            .map((d, i) => { return { index: i, degree: d } })
             .filter(e => e.degree == 0)
             .filter(e => nodes[e.index]);
         if (roots.length == 0) {
@@ -380,17 +380,17 @@ let formatGraph = (graph) => {
         } else if (nodes[roots[0].index].component.name != 'net') {
             throw 'root layer is not net!';
         }
-    
+
         let indexMap = Array(nodes.length).fill(-1);
         let stack = [roots[0].index];
         let counter = 0;
         while (stack.length > 0) {
             let from = stack.pop();
-    
+
             // map old index to new index
             indexMap[from] = counter;
             counter += 1;
-    
+
             let shortcuts = [], routes = [], others = [];
             fromTo[from].forEach(to => {
                 degrees[to] -= 1;
@@ -407,13 +407,13 @@ let formatGraph = (graph) => {
                     }
                 }
             });
-    
+
             // priority: others > shortcut > route
             routes.forEach(e => stack.push(e));
             shortcuts.forEach(e => stack.push(e));
             others.forEach(e => stack.push(e));
         }
-    
+
         if (degrees.filter(d => d > 0).length > 0) {
             throw 'There is cycle in the flowchart!';
         }
@@ -430,10 +430,10 @@ let formatGraph = (graph) => {
 
         let newEdges = new Set();
         edges.forEach(edge => {
-            newEdges.add({from: indexMap[edge.from], to: indexMap[edge.to]});
+            newEdges.add({ from: indexMap[edge.from], to: indexMap[edge.to] });
         });
 
-        return {nodes: newNodes, edges: newEdges};
+        return { nodes: newNodes, edges: newEdges };
     };
 
     let rebuildNodes = (nodes, edges) => {
@@ -508,7 +508,7 @@ let formatGraph = (graph) => {
         throw 'fail to renumber graph!';
     }
     let newNodes = rebuildNodes(g.nodes, g.edges);
-    return {nodes: newNodes, edges: g.edges};
+    return { nodes: newNodes, edges: g.edges };
 };
 
 let exportCfg = () => {
@@ -544,7 +544,42 @@ let importCfg = () => {
 
 let clearDashboard = () => {
     document.getElementById('node-info').innerHTML = '';
-    global.cfg = document.getElementById('cfg').value = '[net]';
+    global.cfg = document.getElementById('cfg').value = `[net]
+batch = 1
+learning_rate = .001
+momentum = .9
+decay = .0001
+subdivisions = 1
+time_steps = 1
+notruth = 0
+random = 0
+adam = 0
+B1 = .9
+B2 = .999
+eps = .0000001
+height = 0
+width = 0
+channels = 0
+inputs = 0
+max_crop = 0
+min_crop = 0
+max_ratio = 0
+min_ratio = 0
+center = 0
+clip = 0
+angle = 0
+aspect = 1
+saturation = 1
+exposure = 1
+hue = 0
+policy = steps
+burn_in = 0
+power = 4
+steps = 1,1
+scales = 1,1
+gamma = 1
+max_batches = 0
+`;
     global.graph = buildGraph(parseCfg(global.cfg));
     global.flowchart = initFlowchart(global.graph);
 };
@@ -661,7 +696,252 @@ let plotLoss = () => {
             plotLearning();
         }
     };
-    xhr.send(); 
+    xhr.send();
+};
+
+let setupCreateNodeButtons = (wrapper) => {
+    let defaultOptions = {
+        'truth': 0,
+        'onlyforward': 0,
+        'stopbackward': 0,
+        'dontsave': 0,
+        'dontload': 0,
+        'numload': 0,
+        'dontloadscales': 0,
+        'learning_rate': 1,
+        'smooth': 0,
+    };
+    let allTypes = [
+        {
+            name: 'logistic', args: {}
+        }, {
+            name: 'l2norm', args: {}
+        }, {
+            name: 'network', args: {}
+        }, {
+            name: 'avgpool', args: {}
+        }, {
+            name: 'batchnorm', args: {}
+        }, {
+            name: 'route', args: {}
+        },
+        {
+            name: 'local', args: {
+                'filters': 1,
+                'size': 1,
+                'stride': 1,
+                'pad': 0,
+                'activation': "logistic",
+            }
+        }, {
+            name: 'deconvolutional', args: {
+                'filters': 1,
+                'size': 1,
+                'stride': 1,
+                'activation': "logistic",
+                'batch_normalize': 0,
+                'pad': 0,
+                'padding': 0,
+            }
+        }, {
+            name: 'convolutional', args: {
+                'filters': 1,
+                'size': 1,
+                'stride': 1,
+                'pad': 0,
+                'padding': 0,
+                'groups': 1,
+                'activation': "logistic",
+                'batch_normalize': 0,
+                'binary': 0,
+                'xnor': 0,
+                'flipped': 0,
+                'dot': 0,
+            }
+        }, {
+            name: 'crnn', args: {
+                'output_filters': 1,
+                'hidden_filters': 1,
+                'activation': "logistic",
+                'batch_normalize': 0,
+                'shortcut': 0,
+            }
+        }, {
+            name: 'rnn', args: {
+                'output': 1,
+                'activation': "logistic",
+                'batch_normalize': 0,
+                'shortcut': 0,
+            }
+        }, {
+            name: 'gru', args: {
+                'output': 1,
+                'batch_normalize': 0,
+                'tanh': 0,
+            }
+        }, {
+            name: 'lstm', args: {
+                'output': 1,
+                'batch_normalize': 0,
+            }
+        }, {
+            name: 'connected', args: {
+                'output': 1,
+                'activation': "logistic",
+                'batch_normalize': 0,
+            }
+        }, {
+            name: 'softmax', args: {
+                'groups': 1,
+                'temperature': 1,
+                'tree': 0,
+                'spatial': 0,
+                'noloss': 0,
+            }
+        }, {
+            name: 'yolo', args: {
+                'classes': 20,
+                'num': 1,
+                'mask': 0,
+                'max': 90,
+                'jitter': .2,
+                'ignore_thresh': .5,
+                'truth_thresh': 1,
+                'random': 0,
+                'map': 0,
+                'anchors': 0,
+            }
+        }, {
+            name: 'iseg', args: {
+                'classes': 20,
+                'ids': 32,
+            }
+        }, {
+            name: 'region', args: {
+                'coords': 4,
+                'classes': 20,
+                'num': 1,
+                'log': 0,
+                'sqrt': 0,
+                'softmax': 0,
+                'background': 0,
+                'max': 30,
+                'jitter': .2,
+                'rescore': 0,
+                'thresh': .5,
+                'classfix': 0,
+                'absolute': 0,
+                'random': 0,
+                'coord_scale': 1,
+                'object_scale': 1,
+                'noobject_scale': 1,
+                'mask_scale': 1,
+                'class_scale': 1,
+                'bias_match': 0,
+                'tree': 0,
+                'map': 0,
+                'anchors': 0,
+            }
+        }, {
+            name: 'detection', args: {
+                'coords': 1,
+                'classes': 1,
+                'rescore': 0,
+                'num': 1,
+                'side': 7,
+                'softmax': 0,
+                'sqrt': 0,
+                'max': 90,
+                'coord_scale': 1,
+                'forced': 0,
+                'object_scale': 1,
+                'noobject_scale': 1,
+                'class_scale': 1,
+                'jitter': .2,
+                'random': 0,
+                'reorg': 0,
+            }
+        }, {
+            name: 'cost', args: {
+                'type': "sse",
+                'scale': 1,
+                'ratio': 0,
+                'noobj': 1,
+                'thresh': 0,
+            }
+        }, {
+            name: 'crop', args: {
+                'crop_height': 1,
+                'crop_width': 1,
+                'flip': 0,
+                'angle': 0,
+                'saturation': 1,
+                'exposure': 1,
+                'noadjust': 0,
+                'shift': 0,
+            }
+        }, {
+            name: 'reorg', args: {
+                'stride': 1,
+                'reverse': 0,
+                'flatten': 0,
+                'extra': 0,
+            }
+        }, {
+            name: 'maxpool', args: {
+                'stride': 1,
+                'size': 1,
+                'padding': 0,
+            }
+        }, {
+            name: 'dropout', args: {
+                'probability': .5,
+            }
+        }, {
+            name: 'normalization', args: {
+                'alpha': .0001,
+                'beta': .75,
+                'kappa': 1,
+                'size': 5,
+            }
+        }, {
+            name: 'shortcut', args: {
+                'activation': "linear",
+                'alpha': 1,
+                'beta': 1,
+            }
+        }, {
+            name: 'activation', args: {
+                'activation': "linear",
+            }
+        }, {
+            name: 'upsample', args: {
+                'stride': 2,
+                'scale': 1,
+            }
+        }
+    ];
+    allTypes.forEach(t => {
+        let args = {};
+        Object.keys(defaultOptions).forEach(k => {
+            args[k] = defaultOptions[k];
+        });
+        Object.keys(t.args).forEach(k => {
+            args[k] = t.args[k];
+        });
+        let button = document.createElement('a');
+        button.innerText = t.name;
+        button.href = '#';
+        button.classList.add('btn');
+        button.classList.add('btn-primary');
+        button.addEventListener('click', e => {
+            createNode(global.graph, global.flowchart, t.name, args);
+            $('#create-layer-modal').modal('hide');
+            e.preventDefault();
+        });
+        wrapper.appendChild(button);
+        wrapper.append(' ');
+    });
 };
 
 let setupButtons = () => {
@@ -680,10 +960,10 @@ let setupButtons = () => {
         e.preventDefault();
     });
 
-    document.getElementById('create-node-button').addEventListener('click', (e) => {
-        createNode(global.graph, global.flowchart);
-        e.preventDefault();
-    });
+    // document.getElementById('create-node-button').addEventListener('click', (e) => {
+    //     createNode(global.graph, global.flowchart, 'n', { 'a': '' });
+    //     e.preventDefault();
+    // });
 
     document.getElementById('save-config-button').addEventListener('click', (e) => {
         global.cfg = document.getElementById('cfg').value;
@@ -713,6 +993,8 @@ let setupButtons = () => {
         document.getElementById('training').style.display = 'none';
         e.preventDefault();
     });
+
+    setupCreateNodeButtons(document.getElementById('create-nodes'));
 };
 
 window.onload = () => {
