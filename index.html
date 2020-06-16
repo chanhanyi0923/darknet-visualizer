@@ -68,6 +68,43 @@ body {
   width: 100%;
   height: 500px;
 }
+
+.lds-ring {
+  display: inline-block;
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+.lds-ring div {
+  box-sizing: border-box;
+  display: block;
+  position: absolute;
+  width: 64px;
+  height: 64px;
+  margin: 8px;
+  border: 8px solid rgb(0, 0, 0);
+  border-radius: 50%;
+  animation: lds-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+  border-color: rgb(0, 0, 0) transparent transparent transparent;
+}
+.lds-ring div:nth-child(1) {
+  animation-delay: -0.45s;
+}
+.lds-ring div:nth-child(2) {
+  animation-delay: -0.3s;
+}
+.lds-ring div:nth-child(3) {
+  animation-delay: -0.15s;
+}
+@keyframes lds-ring {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
     </style>
   </head>
   <body>
@@ -82,6 +119,16 @@ body {
           <li class="nav-item">
             <a class="nav-link" href="#" id="to-training-link">
               Training
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" id="to-testing-link">
+              Testing
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" id="to-dataset-link">
+              Dataset
             </a>
           </li>
         </ul>
@@ -151,17 +198,97 @@ body {
 
       <!-- training -->
       <div id="training" class="row">
-        <div class="col-12">
-          <a href="#" class="btn btn-success" id="start-training-button">Start training</a>
+        <div class="col-4">
+          <form class="form">
+            <div class="form-group">
+              <label>Dataset</label>
+              <select class="form-control">
+                <option>voc dataset</option>
+              </select>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="true" id="with-pre-trained-weights" name="with-pre-trained-weights">
+              <label class="form-check-label" for="with-pre-trained-weights">
+                With pre-trained weights
+              </label>
+            </div>
+            <div class="form-group">
+              <label>Pre-trained weights</label>
+              <select class="form-control">
+                <option>yolo-v3-tiny</option>
+              </select>
+            </div>
+            <a href="#" class="btn btn-success" id="start-training-button">Start training</a>
+          </form>
+          <br>
           <a href="#" class="btn btn-danger" id="stop-training-button">Stop training</a>
         </div>
-        <div class="col-6">
+        <div class="col-4">
           <h2>Loss function</h2>
-          <div id="loss-plot"></div>
+          <div id="loss-plot">
+            <div class="lds-ring"><div></div><div></div><div></div><div></div></div>
+          </div>
         </div>
-        <div class="col-6">
+        <div class="col-4">
           <h2>Learning rate</h2>
-          <div id="learning-plot"></div>
+          <div id="learning-plot">
+            <div class="lds-ring"><div></div><div></div><div></div><div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- testing -->
+      <div id="testing" class="row">
+        <div class="col-12">
+          <form class="form">
+            <input type="file" id="test-image" name="test-image" class="form-control">
+            <button type="submit" class="btn btn-success">Test</button>
+          </form>
+          <br>
+          <div>
+            <h2>Result</h2>
+<pre>
+layer     filters    size              input                output
+    0 conv     16  3 x 3 / 1   416 x 416 x   3   ->   416 x 416 x  16  0.150 BFLOPs
+    1 max          2 x 2 / 2   416 x 416 x  16   ->   208 x 208 x  16
+    2 conv     32  3 x 3 / 1   208 x 208 x  16   ->   208 x 208 x  32  0.399 BFLOPs
+    3 max          2 x 2 / 2   208 x 208 x  32   ->   104 x 104 x  32
+    4 conv     64  3 x 3 / 1   104 x 104 x  32   ->   104 x 104 x  64  0.399 BFLOPs
+    5 max          2 x 2 / 2   104 x 104 x  64   ->    52 x  52 x  64
+    6 conv    128  3 x 3 / 1    52 x  52 x  64   ->    52 x  52 x 128  0.399 BFLOPs
+    7 max          2 x 2 / 2    52 x  52 x 128   ->    26 x  26 x 128
+    8 conv    256  3 x 3 / 1    26 x  26 x 128   ->    26 x  26 x 256  0.399 BFLOPs
+    9 max          2 x 2 / 2    26 x  26 x 256   ->    13 x  13 x 256
+   10 conv    512  3 x 3 / 1    13 x  13 x 256   ->    13 x  13 x 512  0.399 BFLOPs
+   11 max          2 x 2 / 1    13 x  13 x 512   ->    13 x  13 x 512
+   12 conv   1024  3 x 3 / 1    13 x  13 x 512   ->    13 x  13 x1024  1.595 BFLOPs
+   13 conv    256  1 x 1 / 1    13 x  13 x1024   ->    13 x  13 x 256  0.089 BFLOPs
+   14 conv    512  3 x 3 / 1    13 x  13 x 256   ->    13 x  13 x 512  0.399 BFLOPs
+   15 conv    255  1 x 1 / 1    13 x  13 x 512   ->    13 x  13 x 255  0.044 BFLOPs
+   16 yolo
+   17 route  13
+   18 conv    128  1 x 1 / 1    13 x  13 x 256   ->    13 x  13 x 128  0.011 BFLOPs
+   19 upsample            2x    13 x  13 x 128   ->    26 x  26 x 128
+   20 route  19 8
+   21 conv    256  3 x 3 / 1    26 x  26 x 384   ->    26 x  26 x 256  1.196 BFLOPs
+   22 conv    255  1 x 1 / 1    26 x  26 x 256   ->    26 x  26 x 255  0.088 BFLOPs
+   23 yolo
+Loading weights from backup/config_final.weights...Done!
+./tmp/000019.jpg: Predicted in 0.003446 seconds.
+pottedplant: 77%
+</pre>
+<img src="./predictions.jpg">
+          </div>
+        </div>
+      </div>
+
+      <!-- dataset -->
+      <div id="dataset" class="row">
+        <div class="col-12">
+          <form class="from">
+            <input type="file" name="upload-dataset">
+            <button type="submit" class="btn btn-success">Upload</button>
+          </form>
         </div>
       </div>
     </div>

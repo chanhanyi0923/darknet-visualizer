@@ -376,7 +376,7 @@ let formatGraph = (graph) => {
         if (roots.length == 0) {
             throw 'root layer does not exist!';
         } else if (roots.length > 1) {
-            throw 'there are multiple roots!';
+            throw 'there are multiple inputs!';
         } else if (nodes[roots[0].index].component.name != 'net') {
             throw 'root layer is not net!';
         }
@@ -665,7 +665,9 @@ let plotLoss = () => {
                         color: 'DodgerBlue'
                     }
                 }], {
-                    margin: { t: 1 }
+                    margin: { t: 1 },
+                    width: 400,
+                    height: 400,
                 });
                 let wrapper = document.getElementById('loss-plot');
                 wrapper.innerHTML = '';
@@ -686,7 +688,9 @@ let plotLoss = () => {
                         color: 'DodgerBlue'
                     }
                 }], {
-                    margin: { t: 1 }
+                    margin: { t: 1 },
+                    width: 400,
+                    height: 400,
                 });
                 let wrapper = document.getElementById('learning-plot');
                 wrapper.innerHTML = '';
@@ -984,6 +988,8 @@ let setupButtons = () => {
     document.getElementById('to-training-link').addEventListener('click', (e) => {
         document.getElementById('editor').style.display = 'none';
         document.getElementById('training').style.display = null;
+        document.getElementById('testing').style.display = 'none';
+        document.getElementById('dataset').style.display = 'none';
         plotLoss();
         e.preventDefault();
     });
@@ -991,6 +997,24 @@ let setupButtons = () => {
     document.getElementById('to-editor-link').addEventListener('click', (e) => {
         document.getElementById('editor').style.display = null;
         document.getElementById('training').style.display = 'none';
+        document.getElementById('testing').style.display = 'none';
+        document.getElementById('dataset').style.display = 'none';
+        e.preventDefault();
+    });
+
+    document.getElementById('to-testing-link').addEventListener('click', (e) => {
+        document.getElementById('editor').style.display = 'none';
+        document.getElementById('training').style.display = 'none';
+        document.getElementById('testing').style.display = null;
+        document.getElementById('dataset').style.display = 'none';
+        e.preventDefault();
+    });
+
+    document.getElementById('to-dataset-link').addEventListener('click', (e) => {
+        document.getElementById('editor').style.display = 'none';
+        document.getElementById('training').style.display = 'none';
+        document.getElementById('testing').style.display = 'none';
+        document.getElementById('dataset').style.display = null;
         e.preventDefault();
     });
 

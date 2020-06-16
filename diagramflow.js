@@ -67,7 +67,7 @@ var model = {
         this.myCanvas.addEventListener("mousemove", mouse.move)
         this.myCanvas.addEventListener("mouseup", mouse.up)
         this.myCanvas.addEventListener("dblclick", mouse.dblclick)
-        this.myCanvas.addEventListener("keydown", mouse.key)
+        //this.myCanvas.addEventListener("keydown", mouse.key)
         this.myCanvas.ondragstart = function () { return false; };
         // this.myCanvas.width = this.myCanvasContainer.clientWidth;
         // this.myCanvas.height = this.myCanvasContainer.clientHeight;
@@ -702,7 +702,7 @@ var mouse = {
     selAnchor: null,
     selConnector: null,
     selLink: null,
-    editText: false,
+    //editText: false,
 
     mouseCoords: function (ev) {
         var rect = model.myCanvas.getBoundingClientRect();
@@ -710,11 +710,11 @@ var mouse = {
     },
 
     down: function (ev) {
-        if (mouse.editText) {
-            mouse.editText = false;
-            var ed = document.getElementById("tmpTextEdit");
-            ed.style.display = "none";
-        }
+        // if (mouse.editText) {
+            // mouse.editText = false;
+            // var ed = document.getElementById("tmpTextEdit");
+            // ed.style.display = "none";
+        // }
         mouse.selLink = null;
         var mouseC = mouse.mouseCoords(ev);
         var newselNode = model.findNode(mouseC);
@@ -1008,27 +1008,27 @@ var mouse = {
         }
     },
 
-    key: function (ev) {
-        if (ev.key == "Delete") {
-            if (mouse.selNode != null) {
-                //DELETE ALL THE LINKS
-                for (let index = 0; index < model.links.length; index++) {
-                    const element = model.links[index];
-                    if (element.from == mouse.selNode || element.to == mouse.selNode)
-                        model.links.splice(index, 1);
-                }
-                //DELETE NODE
-                model.nodes.splice(mouse.selNode, 1);
-                mouse.selNode = null;
-                model.draw();
-            }
-            if (mouse.selLink != null) {
-                model.links.splice(mouse.selLink, 1);
-                mouse.selLink = null;
-                model.draw();
-            }
-        }
-    },
+    // key: function (ev) {
+        // if (ev.key == "Delete") {
+            // if (mouse.selNode != null) {
+                // //DELETE ALL THE LINKS
+                // for (let index = 0; index < model.links.length; index++) {
+                    // const element = model.links[index];
+                    // if (element.from == mouse.selNode || element.to == mouse.selNode)
+                        // model.links.splice(index, 1);
+                // }
+                // //DELETE NODE
+                // model.nodes.splice(mouse.selNode, 1);
+                // mouse.selNode = null;
+                // model.draw();
+            // }
+            // if (mouse.selLink != null) {
+                // model.links.splice(mouse.selLink, 1);
+                // mouse.selLink = null;
+                // model.draw();
+            // }
+        // }
+    // },
 
     dblclick: function (ev) {
         if (mouse.selNode != null) {
